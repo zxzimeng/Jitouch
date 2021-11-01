@@ -252,25 +252,8 @@ void languageChanged(CFNotificationCenterRef center, void *observer, CFStringRef
 }
 
 - (void)wokeUp:(NSNotification *)aNotification {
-    //restart outselves
-    NSString *killArg1AndOpenArg2Script = @"kill -9 $1 \n open \"$2\"";
-
-    //NSTask needs its arguments to be strings
-    NSString *ourPID = [NSString stringWithFormat:@"%d",
-                        [[NSProcessInfo processInfo] processIdentifier]];
-
-    //this will be the path to the .app bundle,
-    //not the executable inside it; exactly what `open` wants
-    NSString * pathToUs = [[NSBundle mainBundle] bundlePath];
-
-    NSArray *shArgs = [NSArray arrayWithObjects:@"-c", // -c tells sh to execute the next argument, passing it the remaining arguments.
-                       killArg1AndOpenArg2Script,
-                       @"", //$0 path to script (ignored)
-                       ourPID, //$1 in restartScript
-                       pathToUs, //$2 in the restartScript
-                       nil];
-    NSTask *restartTask = [NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:shArgs];
-    [restartTask waitUntilExit]; //wait for killArg1AndOpenArg2Script to finish
+    NSLog(@"Woke up. Reloading gestures.");
+    [gesture reload];
 }
 
 #pragma mark -

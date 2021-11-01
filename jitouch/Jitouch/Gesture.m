@@ -1,3 +1,4 @@
+
 //
 //  Gesture.m
 //  Jitouch
@@ -72,8 +73,9 @@ void MTDeviceStart(MTDeviceRef, int);
 void MTUnregisterContactFrameCallback(MTDeviceRef, MTContactCallbackFunction);
 void MTDeviceStop(MTDeviceRef);
 void MTDeviceRelease(MTDeviceRef);
-//BOOL MTDeviceIsRunning(MTDeviceRef);
+bool MTDeviceIsRunning(MTDeviceRef);
 void MTDeviceGetFamilyID(MTDeviceRef, int*);
+OSStatus MTDeviceGetDeviceID(MTDeviceRef, uint64_t*) __attribute__ ((weak_import));    // no 10.5
 
 void CoreDockSendNotification(NSString *notificationName);
 
@@ -2893,6 +2895,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
 }
 
 #pragma mark - Init
+CFArrayRef deviceList;
 
 - (id)init {
     if (self = [super init]) {
@@ -2905,11 +2908,14 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
         initChars();
 
         {
-            CFArrayRef deviceList = MTDeviceCreateList();
+            deviceList = MTDeviceCreateList();
             for (CFIndex i = 0; i < CFArrayGetCount(deviceList); i++) {
                 MTDeviceRef device = (MTDeviceRef)CFArrayGetValueAtIndex(deviceList, i);
                 int familyID;
                 MTDeviceGetFamilyID(device, &familyID);
+                uint64_t deviceID = 0;
+                MTDeviceGetDeviceID(device, &deviceID);
+                NSLog(@"start device %li %"PRIu64" family %d %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
                 if (familyID == 98 || familyID == 99 || familyID == 100  // built-in trackpad
                     || familyID == 101 // retina mbp
                     || familyID == 102 // retina macbook with the Force Touch trackpad (2015)
@@ -3008,6 +3014,52 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
     return self;
 }
 
+- (void)reload {
+    for (CFIndex i = 0; i < CFArrayGetCount(deviceList); i++) {
+        MTDeviceRef device = (MTDeviceRef)CFArrayGetValueAtIndex(deviceList, i);
+        int familyID;
+        MTDeviceGetFamilyID(device, &familyID);
+        uint64_t deviceID = 0;
+        MTDeviceGetDeviceID(device, &deviceID);
+        NSLog(@"stop device %li %"PRIu64" family %d %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+        if (familyID >= 98) {
+            MTDeviceStop(device);
+        }
+        MTDeviceRelease(device);
+    }
+    deviceList = MTDeviceCreateList();
+    for (CFIndex i = 0; i < CFArrayGetCount(deviceList); i++) {
+        MTDeviceRef device = (MTDeviceRef)CFArrayGetValueAtIndex(deviceList, i);
+        int familyID;
+        MTDeviceGetFamilyID(device, &familyID);
+        uint64_t deviceID = 0;
+        MTDeviceGetDeviceID(device, &deviceID);
+        NSLog(@"start device %li %"PRIu64" family %d %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+        if (familyID == 98 || familyID == 99 || familyID == 100  // built-in trackpad
+            || familyID == 101 // retina mbp
+            || familyID == 102 // retina macbook with the Force Touch trackpad (2015)
+            || familyID == 103 // retina mbp 13" with the Force Touch trackpad (2015)
+            || familyID == 104
+            || familyID == 105) { // macbook with touch bar
+            MTRegisterContactFrameCallback(device, trackpadCallback);
+            MTDeviceStart(device, 0);
+        } else if (familyID == 112 // magic mouse & magic mouse 2
+            || familyID == 113 // magic mouse 3?
+            ) {
+            MTRegisterContactFrameCallback(device, magicMouseCallback);
+            MTDeviceStart(device, 0);
+        } else if (familyID == 128 // magic trackpad
+            || familyID == 129 // magic trackpad 2
+            || familyID == 130 // magic trackpad 3?
+            ) {
+            MTRegisterContactFrameCallback(device, trackpadCallback);
+            MTDeviceStart(device, 0);
+        } else if (familyID >= 98) { // Unknown ID. Assume it's a trackpad.
+            MTRegisterContactFrameCallback(device, trackpadCallback);
+            MTDeviceStart(device, 0);
+        }
+    }
+}
 
 #pragma mark - Character Recognizer
 
@@ -3952,6 +4004,16 @@ static void trackpadRecognizerTwo(const Finger *data, int nFingers, double times
             step = 0;
         }
     }
+}
+
+#pragma mark -
+
+- (void) dealloc {
+    for (CFIndex i = 0; i < CFArrayGetCount(deviceList); i++) {
+        MTDeviceRef device = (MTDeviceRef)CFArrayGetValueAtIndex(deviceList, i);
+        MTDeviceRelease(device);
+    }
+    [super dealloc];
 }
 
 @end
