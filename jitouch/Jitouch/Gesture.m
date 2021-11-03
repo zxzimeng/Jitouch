@@ -2895,7 +2895,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
 }
 
 #pragma mark - Init
-CFArrayRef deviceList;
+CFMutableArrayRef deviceList;
 
 - (id)init {
     NSLog(@"Initializing.");
@@ -3025,10 +3025,13 @@ CFArrayRef deviceList;
         MTDeviceGetDeviceID(device, &deviceID);
         NSLog(@"stop device %li %"PRIu64" family %d %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
         if (familyID >= 98) {
+            MTUnregisterContactFrameCallback(device, trackpadCallback);
+            MTUnregisterContactFrameCallback(device, magicMouseCallback);
             MTDeviceStop(device);
         }
-        MTDeviceRelease(device);
     }
+    CFRelease(deviceList);
+    sleep(1);
     deviceList = MTDeviceCreateList();
     for (CFIndex i = 0; i < CFArrayGetCount(deviceList); i++) {
         MTDeviceRef device = (MTDeviceRef)CFArrayGetValueAtIndex(deviceList, i);
@@ -4011,10 +4014,7 @@ static void trackpadRecognizerTwo(const Finger *data, int nFingers, double times
 #pragma mark -
 
 - (void) dealloc {
-    for (CFIndex i = 0; i < CFArrayGetCount(deviceList); i++) {
-        MTDeviceRef device = (MTDeviceRef)CFArrayGetValueAtIndex(deviceList, i);
-        MTDeviceRelease(device);
-    }
+    CFRelease(deviceList);
     [super dealloc];
 }
 
