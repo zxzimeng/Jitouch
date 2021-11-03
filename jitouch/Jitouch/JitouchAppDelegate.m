@@ -252,7 +252,11 @@ void languageChanged(CFNotificationCenterRef center, void *observer, CFStringRef
 }
 
 - (void)wokeUp:(NSNotification *)aNotification {
-    NSLog(@"Woke up. Reloading gestures.");
+    NSLog(@"Woke up.");
+    [self reload];
+}
+
+- (void)reload {
     [gesture reload];
 }
 

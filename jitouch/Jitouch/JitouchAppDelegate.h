@@ -19,6 +19,8 @@
 
 @property (assign) IBOutlet NSWindow *window;
 
+- (void)reload;
+
 @end
 
 extern CursorWindow *cursorWindow;
