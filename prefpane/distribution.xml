@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<installer-gui-script minSpecVersion="1">
+    <title>Jitouch</title>
+    <pkg-ref id="com.jitouch.Jitouch"/>
+    <options customize="always" require-scripts="false"/>
+    <choices-outline>
+        <line choice="com.jitouch.Jitouch"/>
+    </choices-outline>
+    <choice id="com.jitouch.Jitouch" title="Jitouch" description="A multi-touch extension for MacBook, Magic Mouse, and Magic Trackpad">
+        <pkg-ref id="com.jitouch.Jitouch"/>
+    </choice>
+    <domains enable_anywhere="false" enable_currentUserHome="true" enable_localSystem="true"/>
+    <pkg-ref id="com.jitouch.Jitouch" version="0" onConclusion="none">JitouchPrefpane.pkg</pkg-ref>
+</installer-gui-script>
