@@ -84,6 +84,8 @@
 		A8D4973610918F7E005C3998 /* resize.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = resize.png; path = ../resize.png; sourceTree = SOURCE_ROOT; };
 		A8DB0A4910842620000A2A08 /* logosmall.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = logosmall.png; path = ../logosmall.png; sourceTree = SOURCE_ROOT; };
 		A8EB72061085318200563ED4 /* logosmalloff.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = logosmalloff.png; path = ../logosmalloff.png; sourceTree = SOURCE_ROOT; };
+		D7730023274C86F000C49145 /* JitouchDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JitouchDebug.entitlements; sourceTree = "<group>"; };
+		D7AE605B274C7A8400FBD29A /* Jitouch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Jitouch.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -141,6 +143,8 @@
 		29B97314FDCFA39411CA2CEA /* Jitouch */ = {
 			isa = PBXGroup;
 			children = (
+				D7730023274C86F000C49145 /* JitouchDebug.entitlements */,
+				D7AE605B274C7A8400FBD29A /* Jitouch.entitlements */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
@@ -212,7 +216,6 @@
 				8D1107290486CEB800E47090 /* Resources */,
 				8D11072C0486CEB800E47090 /* Sources */,
 				8D11072E0486CEB800E47090 /* Frameworks */,
-				7BB8604815DA332C00031122 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -274,22 +277,6 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		7BB8604815DA332C00031122 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "rm -rf ../../prefpane/Jitouch.app\ncp -R \"${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}\" ../../prefpane\n";
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		8D11072C0486CEB800E47090 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -327,12 +314,17 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_ENTITLEMENTS = JitouchDebug.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development: aaron@kollasch.dev (N6A2V6RU36)";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 2.75;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
+				DEVELOPMENT_TEAM = 5UQY3B3594;
+				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -343,8 +335,10 @@
 				GCC_PREFIX_HEADER = Jitouch_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
 				MARKETING_VERSION = 2.75;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.jitouch.${PRODUCT_NAME:rfc1034identifier}";
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jitouch.Jitouch;
 				PRODUCT_NAME = Jitouch;
+				PROVISIONING_PROFILE_SPECIFIER = "Jitouch aeolus development";
 				STRIP_INSTALLED_PRODUCT = YES;
 			};
 			name = Debug;
@@ -354,11 +348,16 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_ENTITLEMENTS = Jitouch.entitlements;
+				CODE_SIGN_IDENTITY = "Developer ID Application: Aaron Kollasch (5UQY3B3594)";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 2.75;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
+				DEVELOPMENT_TEAM = 5UQY3B3594;
+				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -369,8 +368,9 @@
 				GCC_PREFIX_HEADER = Jitouch_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
 				MARKETING_VERSION = 2.75;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.jitouch.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_BUNDLE_IDENTIFIER = com.jitouch.Jitouch;
 				PRODUCT_NAME = Jitouch;
+				PROVISIONING_PROFILE_SPECIFIER = "Jitouch Distribution";
 				STRIP_INSTALLED_PRODUCT = YES;
 			};
 			name = Release;
