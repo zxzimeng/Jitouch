@@ -3,6 +3,7 @@
 //  Jitouch
 //
 //  Copyright 2021 Supasorn Suwajanakorn and Sukolsak Sakshuwong. All rights reserved.
+//  Modified work Copyright 2021 Aaron Kollasch. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>
