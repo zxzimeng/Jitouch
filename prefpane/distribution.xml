@@ -2,7 +2,7 @@
 <installer-gui-script minSpecVersion="1">
     <title>Jitouch</title>
     <pkg-ref id="com.jitouch.Jitouch"/>
-    <options customize="always" require-scripts="false"/>
+    <options customize="always" require-scripts="false" hostArchitectures="x86_64,arm64"/>
     <choices-outline>
         <line choice="com.jitouch.Jitouch"/>
     </choices-outline>
