@@ -2659,6 +2659,15 @@ static void magicTrackpadRemoved(void* refCon, io_iterator_t iterator) {
 #pragma mark - CGEventCallback
 
 static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
+    if (type == kCGEventTapDisabledByTimeout) {
+        NSLog(@"kCGEventTapDisabledByTimeout; exiting.");
+        exit(1);
+    }
+
+    if (type == kCGEventTapDisabledByUserInput) {
+        return event;
+    }
+
     if (trackpadNFingers == 2 && twoFingersDistance < 0.3f && (type == kCGEventLeftMouseDown || type == kCGEventLeftMouseUp)) {
         return NULL;
     }
