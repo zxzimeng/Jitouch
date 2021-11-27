@@ -11,6 +11,8 @@
 
 - (id)init;
 
+- (void)reload;
+
 @end
 
 void turnOffGestures(void);
