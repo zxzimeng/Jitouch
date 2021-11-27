@@ -1,4 +1,3 @@
-
 //
 //  Gesture.m
 //  Jitouch
