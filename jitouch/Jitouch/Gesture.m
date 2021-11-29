@@ -2986,6 +2986,7 @@ CFMutableArrayRef deviceList;
                     MTRegisterContactFrameCallback(device, trackpadCallback);
                     MTDeviceStart(device, 0);
                 }
+                NSLog(@"Device %li %"PRIu64" family %d is %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
             }
             //CFRelease((CFMutableArrayRef)deviceList); // DO NOT release. It'll crash.
         }
@@ -3071,6 +3072,7 @@ CFMutableArrayRef deviceList;
             MTUnregisterContactFrameCallback(device, magicMouseCallback);
             MTDeviceStop(device);
         }
+        NSLog(@"Device %li %"PRIu64" family %d is %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
     }
     CFRelease(deviceList);
     sleep(1);
@@ -3105,6 +3107,7 @@ CFMutableArrayRef deviceList;
             MTRegisterContactFrameCallback(device, trackpadCallback);
             MTDeviceStart(device, 0);
         }
+        NSLog(@"Device %li %"PRIu64" family %d is %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
     }
 }
 
