@@ -2962,7 +2962,7 @@ CFMutableArrayRef deviceList;
                 MTDeviceGetFamilyID(device, &familyID);
                 uint64_t deviceID = 0;
                 MTDeviceGetDeviceID(device, &deviceID);
-                NSLog(@"start device %li %"PRIu64" family %d %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+                NSLog(@"Start device %li %"PRIu64" family %d, (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
                 if (familyID == 98 || familyID == 99 || familyID == 100  // built-in trackpad
                     || familyID == 101 // retina mbp
                     || familyID == 102 // retina macbook with the Force Touch trackpad (2015)
@@ -3065,7 +3065,7 @@ CFMutableArrayRef deviceList;
         MTDeviceGetFamilyID(device, &familyID);
         uint64_t deviceID = 0;
         MTDeviceGetDeviceID(device, &deviceID);
-        NSLog(@"stop device %li %"PRIu64" family %d %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+        NSLog(@"Stop device %li %"PRIu64" family %d (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
         if (familyID >= 98) {
             MTUnregisterContactFrameCallback(device, trackpadCallback);
             MTUnregisterContactFrameCallback(device, magicMouseCallback);
@@ -3081,7 +3081,7 @@ CFMutableArrayRef deviceList;
         MTDeviceGetFamilyID(device, &familyID);
         uint64_t deviceID = 0;
         MTDeviceGetDeviceID(device, &deviceID);
-        NSLog(@"start device %li %"PRIu64" family %d %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+        NSLog(@"Start device %li %"PRIu64", family %d, (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
         if (familyID == 98 || familyID == 99 || familyID == 100  // built-in trackpad
             || familyID == 101 // retina mbp
             || familyID == 102 // retina macbook with the Force Touch trackpad (2015)
