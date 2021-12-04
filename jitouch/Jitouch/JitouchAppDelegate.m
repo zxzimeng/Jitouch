@@ -3,6 +3,7 @@
 //  Jitouch
 //
 //  Copyright 2021 Supasorn Suwajanakorn and Sukolsak Sakshuwong. All rights reserved.
+//  Modified work Copyright 2021 Aaron Kollasch. All rights reserved.
 //
 
 #import "JitouchAppDelegate.h"
@@ -20,65 +21,18 @@ CGKeyCode keyMap[128]; // for dvorak support
 
 @synthesize window;
 
-- (void)addJitouchToLoginItems{
-    NSString *jitouchPath = [[NSString stringWithFormat:@"file://%@",[[NSBundle mainBundle] bundlePath]] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-    NSURL *jitouchURL = [NSURL URLWithString:jitouchPath];
-
-
-    LSSharedFileListRef loginListRef = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
-    if (loginListRef) {
-        // delete all shortcuts to jitouch in the login items
-        UInt32 seedValue;
-        NSArray  *loginItemsArray = (NSArray *)LSSharedFileListCopySnapshot(loginListRef, &seedValue);
-        for (id item in loginItemsArray) {
-            LSSharedFileListItemRef itemRef = (LSSharedFileListItemRef)item;
-            CFURLRef thePath;
-            if (LSSharedFileListItemResolve(itemRef, 0, (CFURLRef*) &thePath, NULL) == noErr) {
-                NSRange range = [[(NSURL*)thePath path] rangeOfString:@"Jitouch"];
-                if (range.location != NSNotFound)
-                    LSSharedFileListItemRemove(loginListRef, itemRef);
-            }
-        }
-        [loginItemsArray release];
-
-        if (![settings objectForKey:@"StartAtLogin"] || [[settings objectForKey:@"StartAtLogin"] intValue]) {
-            // add shortcut to jitouch in the login items (there should be only one shortcut)
-            LSSharedFileListItemRef loginItemRef = LSSharedFileListInsertItemURL(loginListRef,  kLSSharedFileListItemLast, NULL,  NULL, (CFURLRef)jitouchURL, NULL, NULL);
-
-            if (loginItemRef) {
-                CFRelease(loginItemRef);
-            }
-        }
-
-        CFRelease(loginListRef);
-    }
-}
-
-- (void)removeJitouchFromLoginItems{
-    LSSharedFileListRef loginListRef = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
-    if (loginListRef) {
-        // delete all shortcuts to jitouch in the login items
-        UInt32 seedValue;
-        NSArray *loginItemsArray = (NSArray *)LSSharedFileListCopySnapshot(loginListRef, &seedValue);
-        for (id item in loginItemsArray) {
-            LSSharedFileListItemRef itemRef = (LSSharedFileListItemRef)item;
-            CFURLRef thePath;
-            if (LSSharedFileListItemResolve(itemRef, 0, (CFURLRef*) &thePath, NULL) == noErr) {
-                NSRange range = [[(NSURL*)thePath path] rangeOfString:@"Jitouch"];
-                if (range.location != NSNotFound)
-                    LSSharedFileListItemRemove(loginListRef, itemRef);
-            }
-        }
-        [loginItemsArray release];
-        CFRelease(loginListRef);
-    }
+- (void)unloadJitouchLaunchAgent {
+    NSString *plistPath = [@"~/Library/LaunchAgents/com.jitouch.Jitouch.plist" stringByStandardizingPath];
+    NSArray *unloadArgs = [NSArray arrayWithObjects:@"unload",
+                           plistPath,
+                           nil];
+    NSTask *unloadTask = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl" arguments:unloadArgs];
+    [unloadTask waitUntilExit];
 }
 
 #pragma mark - Menu
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
-    if ([item action] == @selector(switchChange:))
-        return NO;
     return YES;
 }
 
@@ -142,8 +96,7 @@ CGKeyCode keyMap[128]; // for dvorak support
 
 
 - (void)quit:(id)sender {
-    // Remove from login item
-    [self removeJitouchFromLoginItems];
+    [self unloadJitouchLaunchAgent];
 
     // Quit
     [NSApp terminate: sender];

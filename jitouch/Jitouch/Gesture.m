@@ -2825,11 +2825,11 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
         CFMachPortRef newEventTap = nil;
         int i = 0;
         while (newEventTap == nil) {
-            if (i > 360) {
-                NSLog(@"Could not create CGEventTap");
-                exit(1);
+            if (i < 360) {
+                sleep(1);
+            } else {
+                sleep(360);
             }
-            sleep(1);
             newEventTap = [me createEventTap];
             i++;
         }
@@ -2962,7 +2962,7 @@ CFMutableArrayRef deviceList;
                 MTDeviceGetFamilyID(device, &familyID);
                 uint64_t deviceID = 0;
                 MTDeviceGetDeviceID(device, &deviceID);
-                NSLog(@"Start device %li %"PRIu64" family %d, (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+                NSLog(@"Start device %li %"PRIu64" family %d (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
                 if (familyID == 98 || familyID == 99 || familyID == 100  // built-in trackpad
                     || familyID == 101 // retina mbp
                     || familyID == 102 // retina macbook with the Force Touch trackpad (2015)
@@ -3038,11 +3038,11 @@ CFMutableArrayRef deviceList;
             CFMachPortRef newEventTap = nil;
             int i = 0;
             while (newEventTap == nil) {
-                if (i > 360) {
-                    NSLog(@"Could not create CGEventTap");
-                    exit(1);
+                if (i < 360) {
+                    sleep(1);
+                } else {
+                    sleep(360);
                 }
-                sleep(1);
                 newEventTap = [me createEventTap];
                 i++;
             }
@@ -3083,7 +3083,7 @@ CFMutableArrayRef deviceList;
         MTDeviceGetFamilyID(device, &familyID);
         uint64_t deviceID = 0;
         MTDeviceGetDeviceID(device, &deviceID);
-        NSLog(@"Start device %li %"PRIu64", family %d, (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+        NSLog(@"Start device %li %"PRIu64", family %d (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
         if (familyID == 98 || familyID == 99 || familyID == 100  // built-in trackpad
             || familyID == 101 // retina mbp
             || familyID == 102 // retina macbook with the Force Touch trackpad (2015)

@@ -3,6 +3,7 @@
 //  Jitouch
 //
 //  Copyright 2021 Supasorn Suwajanakorn and Sukolsak Sakshuwong. All rights reserved.
+//  Modified work Copyright 2021 Aaron Kollasch. All rights reserved.
 //
 
 #import "JitouchPref.h"
@@ -17,6 +18,20 @@
 @implementation JitouchPref
 
 CFMachPortRef eventTap;
+
+#ifdef DEBUG
+- (void)redirectLog
+{
+    NSString *pathForLog = [@"~/Library/Logs/com.jitouch.Jitouch.prefpane.log" stringByStandardizingPath];
+    freopen([pathForLog cStringUsingEncoding:NSASCIIStringEncoding],"a+",stderr);
+    NSLog(@"Jitouch prefPane opened");
+}
+#else
+- (void)redirectLog
+{
+    return;
+}
+#endif
 
 - (void)enUpdated {
     [trackpadTab enUpdated];
@@ -38,6 +53,9 @@ CFMachPortRef eventTap;
         [Settings setKey:@"enAll" withInt:value];
 
         [self enUpdated];
+        if (enAll) {
+            [self loadJitouchLaunchAgent];
+        }
     } else if (sender == cbShowIcon) {
         int value = [sender state] == NSOnState ? 1: 0;
         [Settings setKey:@"ShowIcon" withInt:value];
@@ -103,16 +121,12 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
     return event;
 }
 
-
-- (void)addJitouchToLoginItems{
-    NSString *jitouchPath = [NSString stringWithFormat:@"file://%@", [[self bundle] pathForResource:@"Jitouch" ofType:@"app"]];
-    NSURL *jitouchURL = [NSURL URLWithString:jitouchPath];
-
+- (void)removeJitouchFromLoginItems{
     LSSharedFileListRef loginListRef = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
     if (loginListRef) {
         // delete all shortcuts to jitouch in the login items
         UInt32 seedValue;
-        NSArray  *loginItemsArray = (NSArray *)LSSharedFileListCopySnapshot(loginListRef, &seedValue);
+        NSArray *loginItemsArray = (NSArray *)LSSharedFileListCopySnapshot(loginListRef, &seedValue);
         for (id item in loginItemsArray) {
             LSSharedFileListItemRef itemRef = (LSSharedFileListItemRef)item;
             CFURLRef thePath;
@@ -123,22 +137,83 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             }
         }
         [loginItemsArray release];
-
-
-        if (![settings objectForKey:@"StartAtLogin"] || [[settings objectForKey:@"StartAtLogin"] intValue]) {
-            // add shortcut to jitouch in the login items (there should be only one shortcut)
-            LSSharedFileListItemRef loginItemRef = LSSharedFileListInsertItemURL(loginListRef,  kLSSharedFileListItemLast, NULL,  NULL, (CFURLRef)jitouchURL, NULL, NULL);
-
-            if (loginItemRef) {
-                CFRelease(loginItemRef);
-            }
-        }
-
         CFRelease(loginListRef);
     }
 }
 
+- (NSString *)generateJitouchLaunchAgent {
+    NSString *pathToUs = [[self bundle] bundlePath];
+    NSString *home = NSHomeDirectory();
+    NSString *launchAgentFmt = @"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+"<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+"<plist version=\"1.0\">\n"
+"<dict>\n"
+"    <key>Label</key>\n"
+"    <string>com.jitouch.Jitouch.agent</string>\n"
+"    <key>Program</key>\n"
+"    <string>%@/Contents/Resources/Jitouch.app/Contents/MacOS/Jitouch</string>\n"
+"    <key>RunAtLoad</key>\n"
+"    <true/>\n"
+"    <key>KeepAlive</key>\n"
+"    <true/>\n"
+"    <key>ProcessType</key>\n"
+"    <string>Interactive</string>\n"
+"    <key>StandardErrorPath</key>\n"
+"    <string>%@/Library/Logs/com.jitouch.Jitouch.log</string>\n"
+"    <key>StandardOutPath</key>\n"
+"    <string>/dev/null</string>\n"
+"    <key>Umask</key>\n"
+"    <integer>63</integer>\n"
+"</dict>\n"
+"</plist>";
+    NSString *launchAgent = [NSString stringWithFormat:launchAgentFmt, pathToUs, home];
+    return launchAgent;
+}
+
+- (void)loadJitouchLaunchAgent {
+    NSString *plistPath = [@"~/Library/LaunchAgents/com.jitouch.Jitouch.plist" stringByStandardizingPath];
+    NSArray *loadArgs = [NSArray arrayWithObjects:@"load",
+                         plistPath,
+                         nil];
+    NSTask *loadTask = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl" arguments:loadArgs];
+    [loadTask waitUntilExit];
+}
+
+- (void)unloadJitouchLaunchAgent {
+    NSString *plistPath = [@"~/Library/LaunchAgents/com.jitouch.Jitouch.plist" stringByStandardizingPath];
+    NSArray *unloadArgs = [NSArray arrayWithObjects:@"unload",
+                           plistPath,
+                           nil];
+    NSTask *unloadTask = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl" arguments:unloadArgs];
+    [unloadTask waitUntilExit];
+}
+
+- (void)addJitouchLaunchAgent {
+    NSString *launchAgent = [self generateJitouchLaunchAgent];
+    NSString *plistPath = [@"~/Library/LaunchAgents/com.jitouch.Jitouch.plist" stringByStandardizingPath];
+    NSError *error;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:plistPath] &&
+        [launchAgent isEqualToString:
+         [NSString stringWithContentsOfFile:plistPath encoding:NSUTF8StringEncoding error:&error]
+        ]) {
+        return;
+    }
+    [launchAgent writeToFile:plistPath atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    NSLog(@"Updated LaunchAgent at %@", plistPath);
+
+    [self unloadJitouchLaunchAgent];
+
+    // in case an older Jitouch is still around
+    [self removeJitouchFromLoginItems];
+    [self killAllJitouchs];
+
+    [self loadJitouchLaunchAgent];
+
+    NSLog(@"Reloaded LaunchAgent at %@", plistPath);
+}
+
 - (void)mainViewDidLoad {
+    [self redirectLog];
     isPrefPane = YES;
     [Settings loadSettings:self];
 
@@ -160,11 +235,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
         [self killAllJitouchs];
         running = NO;
     }
-    [self addJitouchToLoginItems];
-    //if (!running) {
-        NSString *pathToJitouchInBundle = [[self bundle] pathForResource:@"Jitouch" ofType:@"app"];
-        [[NSWorkspace sharedWorkspace] openFile:pathToJitouchInBundle];
-    //}
+    [self addJitouchLaunchAgent];
 
 
     NSInteger tabIndex;
