@@ -3,6 +3,7 @@
 //  Jitouch
 //
 //  Copyright 2021 Supasorn Suwajanakorn and Sukolsak Sakshuwong. All rights reserved.
+//  Modified work Copyright 2021 Aaron Kollasch. All rights reserved.
 //
 
 #import "JitouchPref.h"
@@ -17,6 +18,20 @@
 @implementation JitouchPref
 
 CFMachPortRef eventTap;
+
+#ifdef DEBUG
+- (void)redirectLog
+{
+    NSString *pathForLog = [@"~/Library/Logs/com.jitouch.Jitouch.prefpane.log" stringByStandardizingPath];
+    freopen([pathForLog cStringUsingEncoding:NSASCIIStringEncoding],"a+",stderr);
+    NSLog(@"Jitouch prefPane opened");
+}
+#else
+- (void)redirectLog
+{
+    return;
+}
+#endif
 
 - (void)enUpdated {
     [trackpadTab enUpdated];
@@ -139,6 +154,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
 }
 
 - (void)mainViewDidLoad {
+    [self redirectLog];
     isPrefPane = YES;
     [Settings loadSettings:self];
 
