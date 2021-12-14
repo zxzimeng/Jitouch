@@ -191,16 +191,39 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
 - (void)addJitouchLaunchAgent {
     NSString *launchAgent = [self generateJitouchLaunchAgent];
     NSString *plistPath = [@"~/Library/LaunchAgents/com.jitouch.Jitouch.plist" stringByStandardizingPath];
+    NSString *launchAgentPath = [@"~/Library/LaunchAgents" stringByStandardizingPath];
     NSError *error;
-    if ([[NSFileManager defaultManager] fileExistsAtPath:plistPath] &&
+    NSFileManager *fm = [NSFileManager defaultManager];
+    // exit if the LaunchAgent plist already matches
+    if ([fm fileExistsAtPath:plistPath] &&
         [launchAgent isEqualToString:
          [NSString stringWithContentsOfFile:plistPath encoding:NSUTF8StringEncoding error:&error]
         ]) {
         return;
     }
+    // create the LaunchAgents directory
+    BOOL isDir;
+    BOOL exists = [fm fileExistsAtPath:launchAgentPath isDirectory:&isDir];
+    if (!exists) {
+        BOOL success = [fm createDirectoryAtPath:launchAgentPath withIntermediateDirectories:NO attributes:nil error:&error];
+        if (!success || error) {
+            NSLog(@"Error creating LaunchAgents directory at %@: %@", launchAgentPath, [error localizedDescription]);
+        } else {
+            NSLog(@"Created the LaunchAgents directory at %@", launchAgentPath);
+        }
+    } else if (!isDir) {
+        NSLog(@"Error creating LaunchAgent at %@: ~/Library/LaunchAgents is not a directory.", plistPath);
+    }
+    // write the LaunchAgent plist
     [launchAgent writeToFile:plistPath atomically:YES encoding:NSUTF8StringEncoding error:&error];
-    NSLog(@"Updated LaunchAgent at %@", plistPath);
+    if (error) {
+        NSLog(@"Error creating LaunchAgent at %@: %@", plistPath, [error localizedDescription]);
+    }
+    else {
+        NSLog(@"Updated LaunchAgent at %@", plistPath);
+    }
 
+    // reload the LaunchAgent
     [self unloadJitouchLaunchAgent];
 
     // in case an older Jitouch is still around

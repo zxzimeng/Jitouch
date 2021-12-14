@@ -3694,24 +3694,24 @@ static int mouseRecognizer(float x, float y, int step) {
     static int distCounter = 0;
     int returnValue = 0;
     if (step == 0) {
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+        @autoreleasepool {
+            lpos[0] = x;
+            lpos[1] = y;
+            firstPos[0] = lpos[0];
+            firstPos[1] = lpos[1];
+            clearStep();
+            top = -10000;
+            bottom = 10000;
+            left = 10000;
+            right = -10000;
+            distCounter = 0;
 
-        lpos[0] = x;
-        lpos[1] = y;
-        firstPos[0] = lpos[0];
-        firstPos[1] = lpos[1];
-        clearStep();
-        top = -10000;
-        bottom = 10000;
-        left = 10000;
-        right = -10000;
-        distCounter = 0;
-        [gestureWindow setHintText: emptyString];
-
-        [gestureWindow setUpWindowForMagicMouse];
-        [gestureWindow addRelativePointX:x-firstPos[0] Y:y-firstPos[1]];
-
-        [pool release];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [gestureWindow setHintText: emptyString];
+                [gestureWindow setUpWindowForMagicMouse];
+                [gestureWindow addRelativePointX:x-firstPos[0] Y:y-firstPos[1]];
+            });
+        };
 
     } else if (step == 1 && !cancelRecognition) {
         if (y > top)
@@ -3723,53 +3723,58 @@ static int mouseRecognizer(float x, float y, int step) {
         if (x < left)
             left = x;
         if (lenSqr(lpos[0], lpos[1], x, y) > dst) {
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+            @autoreleasepool {
+                float deg = atan2(y - lpos[1], x - lpos[0]);
+                advanceStep(deg);
+                lpos[0] = x;
+                lpos[1] = y;
 
-            float deg = atan2(y - lpos[1], x - lpos[0]);
-            advanceStep(deg);
-            lpos[0] = x;
-            lpos[1] = y;
+                [gestureWindow addRelativePointX:x-firstPos[0] Y:y-firstPos[1]];
 
-            [gestureWindow addRelativePointX:x-firstPos[0] Y:y-firstPos[1]];
-
-            if (distCounter >= 0) {
-                distCounter++;
-                if (distCounter >= 3) {
-                    [gestureWindow display];
-                    [gestureWindow setLevel:NSScreenSaverWindowLevel];
-                    [gestureWindow makeKeyAndOrderFront:nil];
-                    distCounter = -1;
-                    returnValue = 1;
+                if (distCounter >= 0) {
+                    distCounter++;
+                    if (distCounter >= 3) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            [gestureWindow display];
+                            [gestureWindow setLevel:NSScreenSaverWindowLevel];
+                            [gestureWindow makeKeyAndOrderFront:nil];
+                        });
+                        distCounter = -1;
+                        returnValue = 1;
+                    }
                 }
-            }
-            if (timer != nil) {
-                if ([timer isValid])
-                    [timer invalidate];
-                [timer release];
-                timer = nil;
-            }
-            timer = [[NSTimer scheduledTimerWithTimeInterval:(hintWaitTime)
-                                                      target:me
-                                                    selector:@selector(showHintTimer:)
-                                                    userInfo:nil
-                                                     repeats:NO] retain];
-            hint_firstPos[0] = firstPos[0];
-            hint_firstPos[1] = firstPos[1];
-            hint_x = x;
-            hint_y = y;
-            hint_top = top;
-            hint_bottom = bottom;
-            hint_left = left;
-            hint_right = right;
-            [gestureWindow setHintText: emptyString];
-            [pool release];
+                if (timer != nil) {
+                    if ([timer isValid])
+                        [timer invalidate];
+                    [timer release];
+                    timer = nil;
+                }
+                timer = [[NSTimer scheduledTimerWithTimeInterval:(hintWaitTime)
+                                                          target:me
+                                                        selector:@selector(showHintTimer:)
+                                                        userInfo:nil
+                                                         repeats:NO] retain];
+                hint_firstPos[0] = firstPos[0];
+                hint_firstPos[1] = firstPos[1];
+                hint_x = x;
+                hint_y = y;
+                hint_top = top;
+                hint_bottom = bottom;
+                hint_left = left;
+                hint_right = right;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [gestureWindow setHintText: emptyString];
+                });
+            };
         }
     } else if (step == 2 || cancelRecognition) {
         cancelRecognition = 0;
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-        [gestureWindow clear];
-        [gestureWindow orderOut:nil];
-        [pool release];
+        @autoreleasepool {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [gestureWindow clear];
+                [gestureWindow orderOut:nil];
+            });
+        };
         if (!cancelRecognition) {
             NSString *commandString = [[NSString alloc] initWithUTF8String:finalizeStep(firstPos[0], firstPos[1], x, y, top, bottom, left, right)];
             doCommand(commandString, CHARRECOGNITION);
@@ -3832,32 +3837,33 @@ static void trackpadRecognizerOne(const Finger *data, int nFingers, double times
             if (timestamp - sttime > clickSpeed || (isTrackpadRecognizing > 0 && isTrackpadRecognizing != 1)) {
                 step = 0;
             } else {
-                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+                @autoreleasepool {
+                    getMousePosition(&mx, &my);
 
-                getMousePosition(&mx, &my);
+                    step = 3;
+                    isTrackpadRecognizing = 1;
+                    lpos[0] = data[0].px;
+                    lpos[1] = data[0].py;
+                    firstPos[0] = lpos[0];
+                    firstPos[1] = lpos[1];
 
-                step = 3;
-                isTrackpadRecognizing = 1;
-                lpos[0] = data[0].px;
-                lpos[1] = data[0].py;
-                firstPos[0] = lpos[0];
-                firstPos[1] = lpos[1];
+                    clearStep();
+                    top = 0;
+                    bottom = 1;
+                    left = 1;
+                    right = 0;
 
-                clearStep();
-                top = 0;
-                bottom = 1;
-                left = 1;
-                right = 0;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [gestureWindow setHintText: emptyString];
+                        [gestureWindow setUpWindowForTrackpad];
+                        [gestureWindow addPointX:data[0].px Y:data[0].py];
+                        [gestureWindow display];
+                        [gestureWindow setLevel:NSScreenSaverWindowLevel];
+                        [gestureWindow makeKeyAndOrderFront:nil];
+                    });
 
-                [gestureWindow setHintText: emptyString];
-                [gestureWindow setUpWindowForTrackpad];
-                [gestureWindow addPointX:data[0].px Y:data[0].py];
-                [gestureWindow display];
-                [gestureWindow setLevel:NSScreenSaverWindowLevel];
-                [gestureWindow makeKeyAndOrderFront:nil];
-
-                step = 3;
-                [pool release];
+                    step = 3;
+                }
             }
         } else if (nFingers == 2) {
             if (lenSqr(data[0].px, data[0].py, fing[0][0], fing[0][1]) > 0.001 || lenSqr(data[1].px, data[1].py, fing[1][0], fing[1][1]) > 0.001)
@@ -3869,18 +3875,19 @@ static void trackpadRecognizerOne(const Finger *data, int nFingers, double times
     } else if (step == 3) {
         if (nFingers != 1 || cancelRecognition) {
             step = 0;
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-            mouseClick(8, mx, my);
-            if (!cancelRecognition && nFingers == 0) {
-                NSString *commandString = [[NSString alloc] initWithUTF8String:finalizeStep(firstPos[0], firstPos[1], lpos[0], lpos[1], top, bottom, left, right)];
-                doCommand(commandString, CHARRECOGNITION);
-                [commandString release];
+            @autoreleasepool {
+                mouseClick(8, mx, my);
+                if (!cancelRecognition && nFingers == 0) {
+                    NSString *commandString = [[NSString alloc] initWithUTF8String:finalizeStep(firstPos[0], firstPos[1], lpos[0], lpos[1], top, bottom, left, right)];
+                    doCommand(commandString, CHARRECOGNITION);
+                    [commandString release];
+                }
+                cancelRecognition = 0;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [gestureWindow clear];
+                    [gestureWindow orderOut:nil];
+                });
             }
-            cancelRecognition = 0;
-            [gestureWindow clear];
-            [gestureWindow orderOut:nil];
-            [pool release];
             isTrackpadRecognizing = 0;
         } else {
             if (hintTime > 0 && timestamp - hintTime >= hintWaitTime) {
@@ -3899,13 +3906,13 @@ static void trackpadRecognizerOne(const Finger *data, int nFingers, double times
             if (lenSqr(lpos[0], lpos[1], data[0].px, data[0].py) > dst) {
                 float deg = atan2(data[0].py - lpos[1], data[0].px - lpos[0]);
                 advanceStep(deg);
-                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-                lpos[0] = data[0].px;
-                lpos[1] = data[0].py;
-                [gestureWindow addPointX:data[0].px Y:data[0].py];
-                [pool release];
-
+                @autoreleasepool {
+                    lpos[0] = data[0].px;
+                    lpos[1] = data[0].py;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [gestureWindow addPointX:data[0].px Y:data[0].py];
+                    });
+                }
                 hintTime = timestamp;
                 [gestureWindow setHintText: emptyString];
             }
@@ -3941,61 +3948,68 @@ static void trackpadRecognizerTwo(const Finger *data, int nFingers, double times
            data[0].py > 0.14 && data[1].py > 0.14 &&
            !CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, kCGMouseButtonLeft) &&
            !(data[0].majorAxis >= 11 && data[1].majorAxis >= 11 && data[!left].angle > 1.5708 && data[left].angle < 1.5708 && data[!left].angle-data[left].angle > 0.5)) {
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+            @autoreleasepool {
+                x = (data[0].px + data[1].px) / 2;
+                y = (data[0].py + data[1].py) / 2;
 
-            x = (data[0].px + data[1].px) / 2;
-            y = (data[0].py + data[1].py) / 2;
+                step = 3;
+                isTrackpadRecognizing = 2;
+                lpos[0] = x;
+                lpos[1] = y;
+                firstPos[0] = lpos[0];
+                firstPos[1] = lpos[1];
+                fing[0][0] = data[0].px;
+                fing[0][1] = data[0].py;
+                fing[1][0] = data[1].px;
+                fing[1][1] = data[1].py;
+                clearStep();
+                top = 0;
+                bottom = 1;
+                left = 1;
+                right = 0;
 
-            step = 3;
-            isTrackpadRecognizing = 2;
-            lpos[0] = x;
-            lpos[1] = y;
-            firstPos[0] = lpos[0];
-            firstPos[1] = lpos[1];
-            fing[0][0] = data[0].px;
-            fing[0][1] = data[0].py;
-            fing[1][0] = data[1].px;
-            fing[1][1] = data[1].py;
-            clearStep();
-            top = 0;
-            bottom = 1;
-            left = 1;
-            right = 0;
-            [gestureWindow setHintText: emptyString];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [gestureWindow setHintText: emptyString];
 
-            distCounter = 0;
+                    distCounter = 0;
 
-            [gestureWindow setUpWindowForTrackpad];
-            [gestureWindow addPointX:x Y:y];
+                    [gestureWindow setUpWindowForTrackpad];
+                    [gestureWindow addPointX:x Y:y];
+                });
 
-            hintTime = -1;
-
-            [pool release];
+                hintTime = -1;
+            };
         } else
             step = 0;
     } else if (step == 3) {
 
         if (nFingers != 2 || cancelRecognition) {
             step = 0;
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-            if (!cancelRecognition && distCounter == -1) {
-                if (!commandString) {
-                    commandString = [[NSMutableString alloc] init];
+            @autoreleasepool {
+                if (!cancelRecognition && distCounter == -1) {
+                    if (!commandString) {
+                        commandString = [[NSMutableString alloc] init];
+                    }
+                    [commandString setString:[NSString stringWithUTF8String:finalizeStep(firstPos[0], firstPos[1], lpos[0], lpos[1], top, bottom, left, right)]];
+                    if (nFingers != 3) {
+                        doCommand(commandString, CHARRECOGNITION);
+                    }
                 }
-                [commandString setString:[NSString stringWithUTF8String:finalizeStep(firstPos[0], firstPos[1], lpos[0], lpos[1], top, bottom, left, right)]];
-                if (nFingers != 3) {
-                    doCommand(commandString, CHARRECOGNITION);
-                }
-            }
-            cancelRecognition = 0;
-            [gestureWindow clear];
-            [gestureWindow orderOut:nil];
-            [pool release];
+                cancelRecognition = 0;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [gestureWindow clear];
+                    [gestureWindow orderOut:nil];
+                });
+            };
             isTrackpadRecognizing = 0;
 
         } else {
             if (hintTime > 0 && timestamp - hintTime >= hintWaitTime) {
-                [gestureWindow setHintText: finalizeStep(firstPos[0], firstPos[1], lpos[0], lpos[1], top, bottom, left, right)];
+                @autoreleasepool {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [gestureWindow setHintText: finalizeStep(firstPos[0], firstPos[1], lpos[0], lpos[1], top, bottom, left, right)];
+                    });
+                };
                 hintTime = -1;
             }
 
@@ -4013,31 +4027,35 @@ static void trackpadRecognizerTwo(const Finger *data, int nFingers, double times
             if (lenSqr(lpos[0], lpos[1], x, y) > dst) {
                 float deg = atan2(y - lpos[1], x - lpos[0]);
                 advanceStep(deg);
-                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-                if (distCounter >= 0) {
-                    distCounter++;
-                    if (distCounter >= 5) {
-                        if (lenSqr(fing[0][0], fing[0][1], data[0].px, data[0].py) > 0.003 && lenSqr(fing[1][0], fing[1][1], data[1].px, data[1].py) > 0.003
-                           && fabs(lenSqr(fing[0][0], fing[0][1], fing[1][0], fing[1][1])-lenSqr(data[0].px, data[0].py, data[1].px, data[1].py)) < 0.13) {
-                            [gestureWindow display];
-                            [gestureWindow setLevel:NSScreenSaverWindowLevel];
-                            [gestureWindow makeKeyAndOrderFront:nil];
-                            distCounter = -1;
-                        } else {
-                            cancelRecognition = 1;
+                @autoreleasepool {
+                    if (distCounter >= 0) {
+                        distCounter++;
+                        if (distCounter >= 5) {
+                            if (lenSqr(fing[0][0], fing[0][1], data[0].px, data[0].py) > 0.003 && lenSqr(fing[1][0], fing[1][1], data[1].px, data[1].py) > 0.003
+                               && fabs(lenSqr(fing[0][0], fing[0][1], fing[1][0], fing[1][1])-lenSqr(data[0].px, data[0].py, data[1].px, data[1].py)) < 0.13) {
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    [gestureWindow display];
+                                    [gestureWindow setLevel:NSScreenSaverWindowLevel];
+                                    [gestureWindow makeKeyAndOrderFront:nil];
+                                });
+                                distCounter = -1;
+                            } else {
+                                cancelRecognition = 1;
+                            }
                         }
-
                     }
-                }
 
-                lpos[0] = x;
-                lpos[1] = y;
-                [gestureWindow addPointX:x Y:y];
-                [pool release];
+                    lpos[0] = x;
+                    lpos[1] = y;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [gestureWindow addPointX:x Y:y];
+                    });
 
-                hintTime = timestamp;
-                [gestureWindow setHintText: emptyString];
+                    hintTime = timestamp;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [gestureWindow setHintText: emptyString];
+                    });
+                };
             }
         }
     } else if (step == 4) {
