@@ -338,7 +338,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 2.78;
+				CURRENT_PROJECT_VERSION = 2.79;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
 				DEVELOPMENT_TEAM = 5UQY3B3594;
@@ -356,7 +356,7 @@
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/MultitouchSupport.framework\"",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 2.78;
+				MARKETING_VERSION = 2.79;
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.jitouch.${PRODUCT_NAME:identifier}";
 				PRODUCT_NAME = Jitouch;
@@ -381,7 +381,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.78;
+				CURRENT_PROJECT_VERSION = 2.79;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
 				DEVELOPMENT_TEAM = 5UQY3B3594;
@@ -396,7 +396,7 @@
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks/MultitouchSupport.framework\"",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 2.78;
+				MARKETING_VERSION = 2.79;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.jitouch.${PRODUCT_NAME:identifier}";
 				PRODUCT_NAME = Jitouch;
 				PROVISIONING_PROFILE_SPECIFIER = "";
