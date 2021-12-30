@@ -214,6 +214,9 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
     } else if (!isDir) {
         NSLog(@"Error creating LaunchAgent at %@: ~/Library/LaunchAgents is not a directory.", plistPath);
     }
+    // unload the LaunchAgent plist if it exists
+    [self unloadJitouchLaunchAgent];
+
     // write the LaunchAgent plist
     [launchAgent writeToFile:plistPath atomically:YES encoding:NSUTF8StringEncoding error:&error];
     if (error) {
@@ -222,9 +225,6 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
     else {
         NSLog(@"Updated LaunchAgent at %@", plistPath);
     }
-
-    // reload the LaunchAgent
-    [self unloadJitouchLaunchAgent];
 
     // in case an older Jitouch is still around
     [self removeJitouchFromLoginItems];
