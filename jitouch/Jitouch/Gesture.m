@@ -554,6 +554,16 @@ static NSString* commandForGesture(NSString *gesture, int device) {
 }
 
 
+static void dispatchCommand(NSString *gesture, int device) {
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
+        NSDate *start = [NSDate date];
+        doCommand(gesture, device);
+        NSTimeInterval timeInterval = -[start timeIntervalSinceNow];
+        if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"%@\" for device %d took %f s", gesture, device, timeInterval);
+    });
+}
+
+
 static void doCommand(NSString *gesture, int device) {
     CFTypeRef axui;
     if (device == CHARRECOGNITION) {
@@ -936,14 +946,14 @@ static void gestureTrackpadChangeSpace(const Finger *data, int nFingers) {
                     float dx = fabs(fing[mini][0] - data[mini].px), dy = fabs(fing[mini][1] - data[mini].py);
                     if (dx > dy) {
                         if (fing[mini][0] < data[mini].px)
-                            doCommand(@"Two-Fix One-Slide-Right", TRACKPAD);
+                            dispatchCommand(@"Two-Fix One-Slide-Right", TRACKPAD);
                         else
-                            doCommand(@"Two-Fix One-Slide-Left", TRACKPAD);
+                            dispatchCommand(@"Two-Fix One-Slide-Left", TRACKPAD);
                     } else {
                         if (fing[mini][1] < data[mini].py)
-                            doCommand(@"Two-Fix One-Slide-Up", TRACKPAD);
+                            dispatchCommand(@"Two-Fix One-Slide-Up", TRACKPAD);
                         else
-                            doCommand(@"Two-Fix One-Slide-Down", TRACKPAD);
+                            dispatchCommand(@"Two-Fix One-Slide-Down", TRACKPAD);
                     }
                     move = 0;
                     fing[mini][0] = data[mini].px;
@@ -989,9 +999,9 @@ static void gestureTrackpadTab4(const Finger *data, int nFingers, double timesta
             step[dir] = 0;
         else if (nFingers == 0) {
             if (dir == 1) {
-                doCommand(@"Pinky-To-Index", TRACKPAD);
+                dispatchCommand(@"Pinky-To-Index", TRACKPAD);
             } else{
-                doCommand(@"Index-To-Pinky", TRACKPAD);
+                dispatchCommand(@"Index-To-Pinky", TRACKPAD);
             }
             step[dir] = 0;
         }
@@ -1289,9 +1299,9 @@ static void gestureTrackpadOneFixTwoSlide(const Finger *data, int nFingers, doub
 
                     if (CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, kCGMouseButtonLeft)) {
                         if (avgy2 > avgy) { //one fix two slide up
-                            doCommand(@"One-Fix-Press Two-Slide-Up", TRACKPAD);
+                            dispatchCommand(@"One-Fix-Press Two-Slide-Up", TRACKPAD);
                         } else { //one fix two slide down
-                            doCommand(@"One-Fix-Press Two-Slide-Down", TRACKPAD);
+                            dispatchCommand(@"One-Fix-Press Two-Slide-Down", TRACKPAD);
                         }
 
                         CGEventRef eventRef;
@@ -1306,9 +1316,9 @@ static void gestureTrackpadOneFixTwoSlide(const Finger *data, int nFingers, doub
                         CFRelease(eventRef);
                     } else {
                         if (avgy2 > avgy) { //one fix two slide up
-                            doCommand(@"One-Fix Two-Slide-Up", TRACKPAD);
+                            dispatchCommand(@"One-Fix Two-Slide-Up", TRACKPAD);
                         } else { //one fix two slide down
-                            doCommand(@"One-Fix Two-Slide-Down", TRACKPAD);
+                            dispatchCommand(@"One-Fix Two-Slide-Down", TRACKPAD);
                         }
                     }
 
@@ -1319,7 +1329,7 @@ static void gestureTrackpadOneFixTwoSlide(const Finger *data, int nFingers, doub
                 /*
                 if (nFingers == 4 && //one fix three slide
                    lenSqr(avgx, avgy, avgx2, avgy2) >= 0.013) {
-                    doCommand(@"One-Fix Three-Slide", TRACKPAD);
+                    dispatchCommand(@"One-Fix Three-Slide", TRACKPAD);
                     reset = 1;
                 }
                  */
@@ -1365,7 +1375,7 @@ static void gestureTrackpadThreeFingerTap(const Finger *data, int nFingers, doub
         if (nFingers <= 1) {
             if (sttime != -1 && timestamp-sttime <= clickSpeed) {
                 if (!trackpadClicked)
-                    doCommand(@"Three-Finger Tap", TRACKPAD);
+                    dispatchCommand(@"Three-Finger Tap", TRACKPAD);
             }
             step = 0;
             sttime = -1;
@@ -1436,9 +1446,9 @@ static void gestureTrackpadOneFixOneTap(const Finger *data, int nFingers, double
             } else {
                 if (data[0].identifier == fixId) {
                     if (enHanded ^ (avgy - data[0].py < data[0].px - avgx))
-                        doCommand(@"One-Fix Left-Tap", TRACKPAD);
+                        dispatchCommand(@"One-Fix Left-Tap", TRACKPAD);
                     else
-                        doCommand(@"One-Fix Right-Tap", TRACKPAD);
+                        dispatchCommand(@"One-Fix Right-Tap", TRACKPAD);
                 }
             }
             step = 0;
@@ -1499,7 +1509,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
         if (moveDown == 3 && type != 1) {
             if (sumy < -0.35) {
                 type = 1;
-                doCommand(@"Three-Swipe-Down", TRACKPAD);
+                dispatchCommand(@"Three-Swipe-Down", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
                     starty[i] = data[i].py;
@@ -1508,7 +1518,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
         } else if (moveUp == 3 && type != 2) {
             if (sumy > 0.35) {
                 type = 2;
-                doCommand(@"Three-Swipe-Up", TRACKPAD);
+                dispatchCommand(@"Three-Swipe-Up", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
                     starty[i] = data[i].py;
@@ -1523,7 +1533,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
                 CFTypeRef axui = axuiUnderMouse();
                 NSString *application = nameOfAxui(axui);
                 if (![application isEqualToString:@"Safari"] && ![application isEqualToString:@"Firefox"]) {
-                    doCommand(@"Three-Swipe-Left", TRACKPAD);
+                    dispatchCommand(@"Three-Swipe-Left", TRACKPAD);
                     for (int i = 0; i < nFingers; i++) {
                         startx[i] = data[i].px;
                         starty[i] = data[i].py;
@@ -1536,7 +1546,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
                 CFTypeRef axui = axuiUnderMouse();
                 NSString *application = nameOfAxui(axui);
                 if (![application isEqualToString:@"Safari"] && ![application isEqualToString:@"Firefox"]) {
-                    doCommand(@"Three-Swipe-Right", TRACKPAD);
+                    dispatchCommand(@"Three-Swipe-Right", TRACKPAD);
                     for (int i = 0; i < nFingers; i++) {
                         startx[i] = data[i].px;
                         starty[i] = data[i].py;
@@ -1564,7 +1574,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
                                                      );
             if (deltacosine < 0.1 && lenl > 0.005 && lenr > 0.003) { //ring finger is harder to move
                 if (curlen-startlen > 0.15 && type != 5) {
-                    doCommand(@"Three-Finger Pinch-Out", TRACKPAD);
+                    dispatchCommand(@"Three-Finger Pinch-Out", TRACKPAD);
                     type = 5;
 
                     l = 0; r = 0;
@@ -1578,7 +1588,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
                         }
                     }
                 } else if (curlen-startlen < -0.15 && type != 6) {
-                    doCommand(@"Three-Finger Pinch-In", TRACKPAD);
+                    dispatchCommand(@"Three-Finger Pinch-In", TRACKPAD);
                     type = 6;
 
                     l = 0; r = 0;
@@ -1642,7 +1652,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
         if (moveDown == 4) {
             if (sumy < -0.46 && type != 1) {
                 type = 1;
-                doCommand(@"Four-Swipe-Down", TRACKPAD);
+                dispatchCommand(@"Four-Swipe-Down", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
                     starty[i] = data[i].py;
@@ -1651,7 +1661,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
         } else if (moveUp == 4 && type != 2) {
             if (sumy > 0.46) {
                 type = 2;
-                doCommand(@"Four-Swipe-Up", TRACKPAD);
+                dispatchCommand(@"Four-Swipe-Up", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
                     starty[i] = data[i].py;
@@ -1660,7 +1670,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
         } else if (moveLeft == 4 && type != 3) {
             if (sumx < -0.40) {
                 type = 3;
-                doCommand(@"Four-Swipe-Left", TRACKPAD);
+                dispatchCommand(@"Four-Swipe-Left", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
                     starty[i] = data[i].py;
@@ -1669,7 +1679,7 @@ static void gestureTrackpadSwipeFourFingers(const Finger *data, int nFingers) {
         } else if (moveRight == 4 && type != 4) {
             if (sumx > 0.40) {
                 type = 4;
-                doCommand(@"Four-Swipe-Right", TRACKPAD);
+                dispatchCommand(@"Four-Swipe-Right", TRACKPAD);
                 for (int i = 0; i < nFingers; i++) {
                     startx[i] = data[i].px;
                     starty[i] = data[i].py;
@@ -1728,11 +1738,11 @@ static void gestureTrackpadTwoFixOneDoubleTap(const Finger *data, int nFingers, 
                             break;
                     if (j == 2) {
                         if (i == 0)
-                            doCommand(@"Two-Fix Index-Double-Tap", TRACKPAD);
+                            dispatchCommand(@"Two-Fix Index-Double-Tap", TRACKPAD);
                         else if (i == 1)
-                            doCommand(@"Two-Fix Middle-Double-Tap", TRACKPAD);
+                            dispatchCommand(@"Two-Fix Middle-Double-Tap", TRACKPAD);
                         else
-                            doCommand(@"Two-Fix Ring-Double-Tap", TRACKPAD);
+                            dispatchCommand(@"Two-Fix Ring-Double-Tap", TRACKPAD);
                         break;
                     }
                 }
@@ -1988,26 +1998,26 @@ static void gestureMagicMouseSwipeThreeFingers(Finger *data, int nFingers, doubl
         if (moveDown < 3 && moveUp < 3) {
             if (moveLeft == 3 && sumx < -0.25) {
                 if (!trigger) {
-                    doCommand(@"Three-Swipe-Left", MAGICMOUSE);
+                    dispatchCommand(@"Three-Swipe-Left", MAGICMOUSE);
                     trigger = 1;
                 }
             } else if (moveRight >= 3 && sumx > 0.22) {
                 if (!trigger) {
-                    doCommand(@"Three-Swipe-Right", MAGICMOUSE);
+                    dispatchCommand(@"Three-Swipe-Right", MAGICMOUSE);
                     trigger = 1;
                 }
             }
         } else if (moveVeryDown == 3) {
             if (sumy < -0.17) {
                 if (!trigger) {
-                    doCommand(@"Three-Swipe-Down", MAGICMOUSE);
+                    dispatchCommand(@"Three-Swipe-Down", MAGICMOUSE);
                     trigger = 1;
                 }
             }
         } else if (moveUp == 3) {
             if (sumy > 0.25) {
                 if (!trigger) {
-                    doCommand(@"Three-Swipe-Up", MAGICMOUSE);
+                    dispatchCommand(@"Three-Swipe-Up", MAGICMOUSE);
                     trigger = 1;
                 }
             }
@@ -2088,28 +2098,28 @@ static void gestureMagicMouseTwoFingers(Finger *data, int nFingers, double times
         if (!trigger) {
             if (dis1 < 0.002 && dis0 > 0.06 && fabs(diffy[0]) < 0.05) {
                 if (diffx[0] < 0) {
-                    doCommand(@"Middle-Fix Index-Slide-Out", MAGICMOUSE);
+                    dispatchCommand(@"Middle-Fix Index-Slide-Out", MAGICMOUSE);
                     trigger = 1;
                 } else {
-                    doCommand(@"Middle-Fix Index-Slide-In", MAGICMOUSE);
+                    dispatchCommand(@"Middle-Fix Index-Slide-In", MAGICMOUSE);
                     trigger = 1;
                 }
 
             } else if (dis0 < 0.002 && dis1 > 0.02 && fabs(diffy[1]) < 0.05) {
                 if (diffx[1] < 0) {
-                    doCommand(@"Index-Fix Middle-Slide-In", MAGICMOUSE);
+                    dispatchCommand(@"Index-Fix Middle-Slide-In", MAGICMOUSE);
                     trigger = 1;
                 } else {
-                    doCommand(@"Index-Fix Middle-Slide-Out", MAGICMOUSE);
+                    dispatchCommand(@"Index-Fix Middle-Slide-Out", MAGICMOUSE);
                     trigger = 1;
                 }
             } else if (dis0 > 0.01 && dis1 > 0.01 && (dis0 > 0.02 || dis1 > 0.02) &&
                        fabs(diffy[0]) < 0.1 &&  fabs(diffy[1]) < 0.1) {
                 if (diffx[0] < 0 && diffx[1] > 0) {
-                    doCommand(@"Pinch Out", MAGICMOUSE);
+                    dispatchCommand(@"Pinch Out", MAGICMOUSE);
                     trigger = 1;
                 } else if (diffx[0] > 0 && diffx[1] < 0) {
-                    doCommand(@"Pinch In", MAGICMOUSE);
+                    dispatchCommand(@"Pinch In", MAGICMOUSE);
                     trigger = 1;
                 }
             }
@@ -2311,14 +2321,14 @@ static void gestureMagicMouseTwoFixOneSlide(Finger *data, int nFingers, double t
                     float dx = fabs(fing[mini][0] - data[mini].px), dy = fabs(fing[mini][1] - data[mini].py);
                     if (dx > dy) {
                         if (fing[mini][0] < data[mini].px)
-                            doCommand(@"Two-Fix One-Slide-Right", MAGICMOUSE);
+                            dispatchCommand(@"Two-Fix One-Slide-Right", MAGICMOUSE);
                         else
-                            doCommand(@"Two-Fix One-Slide-Left", MAGICMOUSE);
+                            dispatchCommand(@"Two-Fix One-Slide-Left", MAGICMOUSE);
                     } else {
                         if (fing[mini][1] < data[mini].py)
-                            doCommand(@"Two-Fix One-Slide-Up", MAGICMOUSE);
+                            dispatchCommand(@"Two-Fix One-Slide-Up", MAGICMOUSE);
                         else
-                            doCommand(@"Two-Fix One-Slide-Down", MAGICMOUSE);
+                            dispatchCommand(@"Two-Fix One-Slide-Down", MAGICMOUSE);
                     }
                     move = 0;
                     fing[mini][0] = data[mini].px;
@@ -2368,7 +2378,7 @@ static int gestureMagicMouseThumb(const Finger *data, int nFingers) {
                     CFRelease(eventRef);
                 } else {
                     type = 1;
-                    doCommand(@"Thumb", MAGICMOUSE);
+                    dispatchCommand(@"Thumb", MAGICMOUSE);
                 }
             }
             ret = tb + 1;
@@ -2462,14 +2472,14 @@ static int gestureMagicMouseOneFixOneTap(const Finger *data, int nFingers, doubl
                 if (data[0].identifier == fixId) {
                     if (avgx < data[0].px) {
                         if (fabs(avgx - data[0].px) > 0.22)
-                            doCommand(@"Middle-Fix Index-Far-Tap", MAGICMOUSE);
+                            dispatchCommand(@"Middle-Fix Index-Far-Tap", MAGICMOUSE);
                         else
-                            doCommand(@"Middle-Fix Index-Near-Tap", MAGICMOUSE);
+                            dispatchCommand(@"Middle-Fix Index-Near-Tap", MAGICMOUSE);
                     } else {
                         if (fabs(avgx - data[0].px) > 0.22)
-                            doCommand(@"Index-Fix Middle-Far-Tap", MAGICMOUSE);
+                            dispatchCommand(@"Index-Fix Middle-Far-Tap", MAGICMOUSE);
                         else
-                            doCommand(@"Index-Fix Middle-Near-Tap", MAGICMOUSE);
+                            dispatchCommand(@"Index-Fix Middle-Near-Tap", MAGICMOUSE);
                     }
                 }
             }
@@ -2695,7 +2705,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             } else if (command == nil) {
             } else { // command that will be done by this case must not create a new click event
                 simulating = IGNOREMOUSE;
-                doCommand(@"Middle Click", MAGICMOUSE);
+                dispatchCommand(@"Middle Click", MAGICMOUSE);
                 return NULL;
             }
         } else if (trackpadNFingers == 3) {
@@ -2714,7 +2724,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             } else if (command == nil) {
             } else { // command that will be done by this case must not create a new click event
                 simulating = IGNOREMOUSE;
-                doCommand(@"Three-Finger Click", TRACKPAD);
+                dispatchCommand(@"Three-Finger Click", TRACKPAD);
                 return NULL;
             }
         } else if (trackpadNFingers == 4) {
@@ -2733,7 +2743,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             } else if (command == nil) {
             } else { // command that will be done by this case must not create a new click event
                 simulating = IGNOREMOUSE;
-                doCommand(@"Four-Finger Click", TRACKPAD);
+                dispatchCommand(@"Four-Finger Click", TRACKPAD);
                 return NULL;
             }
         } else if (magicMouseThreeFingerFlag) {
@@ -2759,7 +2769,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             } else if (command == nil) {
             } else { // command that will be done by this case must not create a new click event
                 simulating = IGNOREMOUSE;
-                doCommand(@"Three-Finger Click", MAGICMOUSE);
+                dispatchCommand(@"Three-Finger Click", MAGICMOUSE);
                 return NULL;
             }
         }
@@ -3777,7 +3787,7 @@ static int mouseRecognizer(float x, float y, int step) {
         };
         if (!cancelRecognition) {
             NSString *commandString = [[NSString alloc] initWithUTF8String:finalizeStep(firstPos[0], firstPos[1], x, y, top, bottom, left, right)];
-            doCommand(commandString, CHARRECOGNITION);
+            dispatchCommand(commandString, CHARRECOGNITION);
             [commandString release];
         }
 
@@ -3879,7 +3889,7 @@ static void trackpadRecognizerOne(const Finger *data, int nFingers, double times
                 mouseClick(8, mx, my);
                 if (!cancelRecognition && nFingers == 0) {
                     NSString *commandString = [[NSString alloc] initWithUTF8String:finalizeStep(firstPos[0], firstPos[1], lpos[0], lpos[1], top, bottom, left, right)];
-                    doCommand(commandString, CHARRECOGNITION);
+                    dispatchCommand(commandString, CHARRECOGNITION);
                     [commandString release];
                 }
                 cancelRecognition = 0;
@@ -3992,7 +4002,7 @@ static void trackpadRecognizerTwo(const Finger *data, int nFingers, double times
                     }
                     [commandString setString:[NSString stringWithUTF8String:finalizeStep(firstPos[0], firstPos[1], lpos[0], lpos[1], top, bottom, left, right)]];
                     if (nFingers != 3) {
-                        doCommand(commandString, CHARRECOGNITION);
+                        dispatchCommand(commandString, CHARRECOGNITION);
                     }
                 }
                 cancelRecognition = 0;
