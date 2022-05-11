@@ -83,6 +83,7 @@ static AXUIElementRef systemWideElement = NULL;
 
 
 static CFMachPortRef eventTap;
+static BOOL recreatingEventTap;
 
 static int quickTabSwitching;
 
@@ -2829,22 +2830,27 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
     } else if (type == kCGEventTapDisabledByUserInput) {
         CGEventTapEnable(eventTap, true);
     } else if (type == kCGEventTapDisabledByTimeout) {
-        NSLog(@"Received kCGEventTapDisabledByTimeout; attempting to recreate CGEventTap. Allow Jitouch in System Preferences -> Privacy -> Accessibility.");
-        CFMachPortInvalidate(eventTap);
-        CFRelease(eventTap);
-        CFMachPortRef newEventTap = nil;
-        int i = 0;
-        while (newEventTap == nil) {
-            if (i < 360) {
-                sleep(1);
-            } else {
-                sleep(360);
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+            if (recreatingEventTap) return;
+            recreatingEventTap = TRUE;
+            NSLog(@"Received kCGEventTapDisabledByTimeout; attempting to recreate CGEventTap. Allow Jitouch in System Preferences -> Privacy -> Accessibility.");
+            CFMachPortInvalidate(eventTap);
+            CFRelease(eventTap);
+            CFMachPortRef newEventTap = nil;
+            int i = 0;
+            while (newEventTap == nil) {
+                if (i < 360) {
+                    sleep(1);
+                } else {
+                    sleep(360);
+                }
+                newEventTap = [me createEventTap];
+                i++;
             }
-            newEventTap = [me createEventTap];
-            i++;
-        }
-        NSLog(@"CGEventTap created");
-        eventTap = newEventTap;
+            NSLog(@"CGEventTap created");
+            eventTap = newEventTap;
+            recreatingEventTap = FALSE;
+        });
         return NULL;
     }
 
