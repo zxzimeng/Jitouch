@@ -11,6 +11,7 @@
             <connections>
                 <outlet property="_window" destination="12" id="26"/>
                 <outlet property="cbShowIcon" destination="183" id="274"/>
+                <outlet property="loggingMode" destination="lcf-GP-iMM" id="yGL-nm-LbE"/>
                 <outlet property="mainTabView" destination="100" id="275"/>
                 <outlet property="scAll" destination="365" id="377"/>
                 <outlet property="scrollView" destination="133" id="279"/>
@@ -773,6 +774,36 @@ DQ
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="jitouchicon" id="744"/>
                                         </imageView>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eai-SA-Zdz">
+                                            <rect key="frame" x="204" y="80" width="109" height="16"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Logging Mode" id="6Xl-zX-oGa">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lcf-GP-iMM">
+                                            <rect key="frame" x="319" y="73" width="94" height="25"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <popUpButtonCell key="cell" type="push" title="Default" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="gpw-XY-QI4" id="PGl-y5-y37">
+                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="menu"/>
+                                                <menu key="menu" id="WrM-zS-FSz">
+                                                    <items>
+                                                        <menuItem title="Default" tag="0" state="on" id="gpw-XY-QI4"/>
+                                                        <menuItem title="Quiet" tag="-1" id="bze-kv-zjA"/>
+                                                        <menuItem title="Info" tag="1" id="aux-8X-cLx"/>
+                                                        <menuItem title="Debug" tag="2" id="14r-4E-Iof">
+                                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                                        </menuItem>
+                                                    </items>
+                                                </menu>
+                                            </popUpButtonCell>
+                                            <connections>
+                                                <action selector="change:" target="-2" id="sXj-3V-hbe"/>
+                                            </connections>
+                                        </popUpButton>
                                     </subviews>
                                 </view>
                             </tabViewItem>
