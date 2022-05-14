@@ -22,6 +22,13 @@ extern NSMutableDictionary *recognitionMap;
 extern float clickSpeed;
 extern float stvt;
 extern int enAll;
+extern int logLevel;
+typedef enum log_level_t : int {
+    LOG_LEVEL_ERROR = -1,
+    LOG_LEVEL_DEFAULT = 0,
+    LOG_LEVEL_INFO = 1,
+    LOG_LEVEL_DEBUG = 2,
+} log_level_t;
 
 //Trackpad
 extern int enTPAll;

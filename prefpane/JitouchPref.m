@@ -65,6 +65,9 @@ CFMachPortRef eventTap;
     } else if (sender == sdSensitivity) {
         stvt = [sender floatValue];
         [Settings setKey:@"Sensitivity" withFloat:[sender floatValue]];
+    } else if (sender == loggingMode) {
+        logLevel = (int)[[sender selectedItem] tag];
+        [Settings setKey:@"LogLevel" withInt:(int)[[sender selectedItem] tag]];
     }
     [Settings noteSettingsUpdated];
 }

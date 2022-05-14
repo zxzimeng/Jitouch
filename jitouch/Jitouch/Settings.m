@@ -27,6 +27,7 @@ NSMutableDictionary *recognitionMap;
 float clickSpeed;
 float stvt;
 int enAll;
+int logLevel;
 
 //Trackpad
 int enTPAll;
@@ -171,6 +172,7 @@ static int notSynchronize;
     [Settings setKey:@"Sensitivity" withFloat:4.6666];
     [Settings setKey:@"ShowIcon" withInt:1];
     [Settings setKey:@"Revision" withInt:kCurrentRevision];
+    [Settings setKey:@"LogLevel" withInt:0];
 
     //Trackpad
     [Settings setKey:@"enTPAll" withInt:1];
@@ -210,6 +212,7 @@ static int notSynchronize;
     enAll = [[settings objectForKey:@"enAll"] intValue];
     clickSpeed = [[settings objectForKey:@"ClickSpeed"] floatValue];
     stvt = [[settings objectForKey:@"Sensitivity"] floatValue];
+    logLevel = [[settings objectForKey:@"LogLevel"] intValue];
 
     //Trackpad
     enTPAll = [[settings objectForKey:@"enTPAll"] intValue];

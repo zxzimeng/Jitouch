@@ -19,6 +19,7 @@
     IBOutlet NSButton *cbShowIcon;
     IBOutlet NSTabView *mainTabView;
     IBOutlet NSScrollView *scrollView;
+    IBOutlet NSPopUpButton *loggingMode;
 
     KeyTextView *keyTextView;
 }
