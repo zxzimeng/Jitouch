@@ -9,11 +9,13 @@ For more details, see https://www.jitouch.com/.
 Download `Install-Jitouch.pkg` from the [releases](https://github.com/aaronkollasch/jitouch/releases/latest) page.
 Double-click and follow the instructions to install.
 
-Built products are available directly as `Jitouch.prefPane.zip`.
-Preference Panes cannot be notarized, so if you download `Jitouch.prefPane` directly,
-you may need to remove the quarantine flag with `xattr -d com.apple.quarantine Jitouch.prefPane`
+## Troubleshooting
 
-## How to run
+After opening the Jitouch preference pane in System Preferences, a prompt should appear to give Jitouch accessibility permissions. If the prompt doesn't appear, try switching Jitouch off and on in the Jitouch preference pane. 
+
+To add Jitouch manually, drag Jitouch.app from `Library/PreferencePanes/Jitouch.prefPane/Contents/Resources/Jitouch.app` to the list in System Preferences -> Security & Privacy -> Privacy -> Accessibility. Then, force restart Jitouch with `killall Jitouch` in the Terminal.
+
+## How to build from source
 
 1. Open jitouch/Jitouch/Jitouch.xcodeproj in Xcode and build the project. This will create Jitouch.app in the prefpane folder. For the highest performance, set the Build Configuration to Release.
 2. Open prefpane/Jitouch.xcodeproj in Xcode and build the project. This will create Jitouch.prefPane.
