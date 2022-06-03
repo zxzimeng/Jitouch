@@ -11,9 +11,15 @@ Double-click and follow the instructions to install.
 
 ## Troubleshooting
 
-After opening the Jitouch preference pane in System Preferences, a prompt should appear to give Jitouch accessibility permissions. If the prompt doesn't appear, try switching Jitouch off and on in the Jitouch preference pane. 
+When opening the Jitouch preference pane for the first time, you may see an error message such as "Could not load Jitouch preference pane". If so, restarting your computer should fix this.
 
-To add Jitouch manually, drag Jitouch.app from `Library/PreferencePanes/Jitouch.prefPane/Contents/Resources/Jitouch.app` to the list in System Preferences -> Security & Privacy -> Privacy -> Accessibility. Then, force restart Jitouch with `killall Jitouch` in the Terminal.
+After opening the Jitouch preference pane in System Preferences, a prompt should appear to give Jitouch accessibility permissions. If the prompt doesn't appear, try switching Jitouch off and on in the Jitouch preference pane. Otherwise, you will need to manually give Jitouch permissions.
+
+#### To manually give Jitouch permissions:
+- Go to the folder `/Library/PreferencePanes/Jitouch.prefPane/Contents/Resources/` in Finder. If you installed Jitouch for your user only, replace `/Library` with `~/Library`.
+- Open System Preferences and navigate to Security & Privacy -> Privacy -> Accessibility, which is a list of apps labeled "Allow these apps to control your computer".
+- Click the lock to make changes, then drag Jitouch.app from Finder into that list.
+- Then, force restart Jitouch with `killall Jitouch` in the Terminal.
 
 ## How to build from source
 
