@@ -16,10 +16,10 @@ When opening the Jitouch preference pane for the first time, you may see an erro
 After opening the Jitouch preference pane in System Preferences, a prompt should appear to give Jitouch accessibility permissions. If the prompt doesn't appear, try switching Jitouch off and on in the Jitouch preference pane. Otherwise, you will need to manually give Jitouch permissions.
 
 #### To manually give Jitouch permissions:
-- Go to the folder `/Library/PreferencePanes/Jitouch.prefPane/Contents/Resources/` in Finder. If you installed Jitouch for your user only, replace `/Library` with `~/Library`.
-- Open System Preferences and navigate to Security & Privacy -> Privacy -> Accessibility, which is a list of apps labeled "Allow these apps to control your computer".
+- Go to the folder `/Library/PreferencePanes/Jitouch.prefPane/Contents/Resources/` in Finder. If you installed Jitouch for your user only, replace `/Library` with `~/Library`. This folder should contain an application named Jitouch.app.
+- Open System Preferences and go to "Security & Privacy -> Privacy -> Accessibility", which is a list labeled "Allow these apps to control your computer".
 - Click the lock to make changes, then drag Jitouch.app from Finder into that list.
-- Then, force restart Jitouch with `killall Jitouch` in the Terminal.
+- Force restart Jitouch with `killall Jitouch` in the Terminal.
 
 ## How to build from source
 
