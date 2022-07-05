@@ -3,6 +3,7 @@
 //  Jitouch
 //
 //  Copyright 2021 Supasorn Suwajanakorn and Sukolsak Sakshuwong. All rights reserved.
+//  Modified work Copyright 2022 Aaron Kollasch. All rights reserved.
 //
 
 #import "ApplicationButton.h"
@@ -18,8 +19,14 @@
 
 - (void)addApplication:(NSString*)path {
     NSBundle *bundle = [NSBundle bundleWithPath: path];
-    NSDictionary *infoDict = [bundle infoDictionary];
-    NSString *displayName = [infoDict objectForKey: @"CFBundleName"];
+    NSDictionary *infoDict = [bundle localizedInfoDictionary];
+    NSString *displayName = [infoDict objectForKey: @"CFBundleDisplayName"];
+    if (!displayName) {
+        infoDict = [bundle infoDictionary];
+        displayName = [infoDict objectForKey: @"CFBundleDisplayName"];
+    }
+    if (!displayName)
+        displayName = [infoDict objectForKey: @"CFBundleName"];
     if (!displayName)
         displayName = [infoDict objectForKey: @"CFBundleExecutable"];
 
