@@ -879,8 +879,8 @@ static void doCommand(NSString *gesture, int device) {
             if (logLevel >= LOG_LEVEL_DEBUG) NSLog(@"Key \"%@%@%@%@%@\" for application \"%@\"",
                                                    (modifierFlags & kCGEventFlagMaskShift)? @"⇧" : @"",
                                                    (modifierFlags & kCGEventFlagMaskControl)? @"⌃" : @"",
-                                                   (modifierFlags & kCGEventFlagMaskAlternate)? @"⌥" : @"",
-                                                   (modifierFlags & kCGEventFlagMaskCommand)? @"⌘" : @"",
+                                                   (modifierFlags & kCGEventFlagMaskAlternate)? @"⌥ " : @"",
+                                                   (modifierFlags & kCGEventFlagMaskCommand)? @"⌘ " : @"",
                                                    [KeyUtility codeToChar:(CGKeyCode)[[commandDict objectForKey:@"KeyCode"] unsignedIntValue]],
                                                    application);
             [keyUtil simulateKeyCode:[[commandDict objectForKey:@"KeyCode"] unsignedShortValue]
