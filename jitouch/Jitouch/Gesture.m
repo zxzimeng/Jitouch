@@ -2695,94 +2695,28 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
         if (simulating) {   //simulating should be reset when mouseup, but sometimes mouseup doesn't get called
             simulating = 0; //so we have to reset it manually
         }
+        NSString *gesture = nil;
+        int device = 0;
         if (middleClickFlag) {
-            NSString *command = commandForGesture(@"Middle Click", MAGICMOUSE);
-            if ([command isEqualToString:@"Middle Click"]) {
-                simulating = MIDDLEBUTTONDOWN;
-                simulatingByDevice = MAGICMOUSE;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 2);
-                CGEventSetType(event, kCGEventOtherMouseDown);
-            } else if ([command isEqualToString:@"Left Click"]) {
-                simulating = LEFTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 0);
-                CGEventSetType(event, kCGEventLeftMouseDown);
-            } else if ([command isEqualToString:@"Right Click"]) {
-                simulating = RIGHTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 1);
-                CGEventSetType(event, kCGEventRightMouseDown);
-            } else if ([command isEqualToString:@"Open Link in New Tab"]) {
-                simulating = COMMANDANDLEFTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 0);
-                CGEventSetFlags(event, kCGEventFlagMaskCommand);
-                CGEventSetType(event, kCGEventLeftMouseDown);
-            } else if (command == nil) {
-            } else { // command that will be done by this case must not create a new click event
-                simulating = IGNOREMOUSE;
-                dispatchCommand(@"Middle Click", MAGICMOUSE);
-                return NULL;
-            }
-            if (command != nil && logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"Middle Click\" -> \"%@\" for magic mouse", command);
+            gesture = @"Middle Click";
+            device = MAGICMOUSE;
         } else if (trackpadNFingers == 3) {
             trackpadClicked = 1;
-            NSString *command = commandForGesture(@"Three-Finger Click", TRACKPAD);
-            if ([command isEqualToString:@"Middle Click"]) {
-                simulating = MIDDLEBUTTONDOWN;
-                simulatingByDevice = TRACKPAD;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 2);
-                CGEventSetType(event, kCGEventOtherMouseDown);
-            } else if ([command isEqualToString:@"Left Click"]) {
-                simulating = LEFTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 0);
-                CGEventSetType(event, kCGEventLeftMouseDown);
-            } else if ([command isEqualToString:@"Right Click"]) {
-                simulating = RIGHTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 1);
-                CGEventSetType(event, kCGEventRightMouseDown);
-            } else if ([command isEqualToString:@"Open Link in New Tab"]) {
-                simulating = COMMANDANDLEFTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 0);
-                CGEventSetFlags(event, kCGEventFlagMaskCommand);
-                CGEventSetType(event, kCGEventLeftMouseDown);
-            } else if (command == nil) {
-            } else { // command that will be done by this case must not create a new click event
-                simulating = IGNOREMOUSE;
-                dispatchCommand(@"Three-Finger Click", TRACKPAD);
-                return NULL;
-            }
-            if (command != nil && logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"Three-Finger Click\" -> \"%@\" for trackpad", command);
+            gesture = @"Three-Finger Click";
+            device = TRACKPAD;
         } else if (trackpadNFingers == 4) {
             trackpadClicked = 1;
-            NSString *command = commandForGesture(@"Four-Finger Click", TRACKPAD);
-            if ([command isEqualToString:@"Middle Click"]) {
-                simulating = MIDDLEBUTTONDOWN;
-                simulatingByDevice = TRACKPAD;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 2);
-                CGEventSetType(event, kCGEventOtherMouseDown);
-            } else if ([command isEqualToString:@"Left Click"]) {
-                simulating = LEFTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 0);
-                CGEventSetType(event, kCGEventLeftMouseDown);
-            } else if ([command isEqualToString:@"Right Click"]) {
-                simulating = RIGHTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 1);
-                CGEventSetType(event, kCGEventRightMouseDown);
-            } else if ([command isEqualToString:@"Open Link in New Tab"]) {
-                simulating = COMMANDANDLEFTBUTTONDOWN;
-                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 0);
-                CGEventSetFlags(event, kCGEventFlagMaskCommand);
-                CGEventSetType(event, kCGEventLeftMouseDown);
-            } else if (command == nil) {
-            } else { // command that will be done by this case must not create a new click event
-                simulating = IGNOREMOUSE;
-                dispatchCommand(@"Four-Finger Click", TRACKPAD);
-                return NULL;
-            }
-            if (command != nil && logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"Four-Finger Click\" -> \"%@\" for trackpad", command);
+            gesture = @"Four-Finger Click";
+            device = TRACKPAD;
         } else if (magicMouseThreeFingerFlag) {
-            NSString *command = commandForGesture(@"Three-Finger Click", MAGICMOUSE);
+            gesture = @"Three-Finger Click";
+            device = MAGICMOUSE;
+        }
+        if (gesture != nil) {
+            NSString *command = commandForGesture(gesture, device);
             if ([command isEqualToString:@"Middle Click"]) {
                 simulating = MIDDLEBUTTONDOWN;
-                simulatingByDevice = MAGICMOUSE;
+                simulatingByDevice = device;
                 CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, 2);
                 CGEventSetType(event, kCGEventOtherMouseDown);
             } else if ([command isEqualToString:@"Left Click"]) {
@@ -2801,10 +2735,10 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             } else if (command == nil) {
             } else { // command that will be done by this case must not create a new click event
                 simulating = IGNOREMOUSE;
-                dispatchCommand(@"Three-Finger Click", MAGICMOUSE);
+                dispatchCommand(gesture, device);
                 return NULL;
             }
-            if (command != nil && logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"Three-Finger Click\" -> \"%@\" for magic mouse", command);
+            if (command != nil && logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"%@\" -> \"%@\" for device %d", gesture, command, device);
         }
 
 
