@@ -2568,7 +2568,7 @@ static int attemptMM;
             int familyID;
             MTDeviceGetFamilyID(device, &familyID);
 
-            if (familyID == 112 || familyID == 113) { // magic mouse
+            if (familyID == 112) { // magic mouse
                 MTRegisterContactFrameCallback(device, magicMouseCallback);
                 MTDeviceStart(device, 0);
                 found = YES;
@@ -2958,7 +2958,6 @@ CFMutableArrayRef deviceList;
                     MTRegisterContactFrameCallback(device, trackpadCallback);
                     MTDeviceStart(device, 0);
                 } else if (familyID == 112 // magic mouse & magic mouse 2
-                    || familyID == 113 // magic mouse 3?
                     ) {
                     MTRegisterContactFrameCallback(device, magicMouseCallback);
                     MTDeviceStart(device, 0);
@@ -3079,7 +3078,6 @@ CFMutableArrayRef deviceList;
             MTRegisterContactFrameCallback(device, trackpadCallback);
             MTDeviceStart(device, 0);
         } else if (familyID == 112 // magic mouse & magic mouse 2
-            || familyID == 113 // magic mouse 3?
             ) {
             MTRegisterContactFrameCallback(device, magicMouseCallback);
             MTDeviceStart(device, 0);
