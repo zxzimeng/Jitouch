@@ -211,25 +211,33 @@ static void getMousePosition(CGFloat *x, CGFloat *y) {
 
 static CFTypeRef getForemostApp() {
     CFTypeRef focusedAppRef;
-    if (systemWideElement && AXUIElementCopyAttributeValue(systemWideElement, kAXFocusedApplicationAttribute, &focusedAppRef) == kAXErrorSuccess) {
-        CFTypeRef focusedWindowRef;
-
-        // does this code belng here?
-        CFTypeRef titleRef;
-        if (AXUIElementCopyAttributeValue(focusedAppRef, kAXTitleAttribute, &titleRef) == kAXErrorSuccess) {
-            if ([(NSString*)titleRef isEqualToString:@"Notification Center"]) {
-                CFRelease(titleRef);
-                return NULL;
-            }
-            CFRelease(titleRef);
+    if (systemWideElement && AXUIElementCopyAttributeValue(systemWideElement, kAXFocusedApplicationAttribute, &focusedAppRef) != kAXErrorSuccess) {
+        NSRunningApplication *frontmostApplication = [[NSWorkspace sharedWorkspace] frontmostApplication];
+        focusedAppRef = AXUIElementCreateApplication([frontmostApplication processIdentifier]);
+        if (focusedAppRef == NULL) {
+            return NULL;
         }
-
-        if (AXUIElementCopyAttributeValue(focusedAppRef, kAXFocusedWindowAttribute, &focusedWindowRef) == kAXErrorSuccess) {
-            CFRelease(focusedAppRef);
-            return focusedWindowRef;
-        }
-        CFRelease(focusedAppRef);
     }
+    CFTypeRef focusedWindowRef;
+
+    // does this code belong here?
+    CFTypeRef titleRef;
+    if (AXUIElementCopyAttributeValue(focusedAppRef, kAXTitleAttribute, &titleRef) == kAXErrorSuccess) {
+        if (
+            [(NSString*)titleRef isEqualToString:@"Notification Center"] ||
+            [(NSString*)titleRef isEqualToString:@"Control Center"]
+        ) {
+            CFRelease(titleRef);
+            return NULL;
+        }
+        CFRelease(titleRef);
+    }
+
+    if (AXUIElementCopyAttributeValue(focusedAppRef, kAXFocusedWindowAttribute, &focusedWindowRef) == kAXErrorSuccess) {
+        CFRelease(focusedAppRef);
+        return focusedWindowRef;
+    }
+    CFRelease(focusedAppRef);
     return NULL;
 }
 
