@@ -95,8 +95,9 @@ static int moveResizeFlag, shouldExitMoveResize;
 
 // distance between two fingers to suppress left click in next/prev tab gesture
 static float twoFingersDistance = 100.0f;
-static BOOL trackpadHasGesture;
-static NSDate *lastGestureDate;
+static BOOL trackpadHasTwoFingers;
+static NSDate *lastTwoFingerDate;
+static NSDate *lastThreeFingerDate;
 
 static int trigger = 0;
 
@@ -1848,16 +1849,18 @@ static int trackpadCallback(int device, Finger *data, int nFingers, double times
     trackpadNFingers = nFingers;
     if (nFingers == 2) {
         twoFingersDistance = lenSqrF(data, 0, 1);
-        trackpadHasGesture = twoFingersDistance < 0.3f;
-    } else if (nFingers == 3) {
-        twoFingersDistance = MAX3(lenSqrF(data, 0, 1), lenSqrF(data, 1, 2), lenSqrF(data, 0, 2));
-        trackpadHasGesture = twoFingersDistance < 0.3f;
+    } else if (nFingers > 2) {
+        twoFingersDistance = 100;
+        lastThreeFingerDate = [NSDate date];
+        lastTwoFingerDate = [NSDate dateWithTimeIntervalSinceNow:-10];
     } else {
-        trackpadHasGesture = FALSE;
         twoFingersDistance = 100;
     }
-    if (trackpadHasGesture) {
-        lastGestureDate = [NSDate date];
+    if (twoFingersDistance < 0.3f && fabs([lastThreeFingerDate timeIntervalSinceNow]) > 0.05) {
+        trackpadHasTwoFingers = TRUE;
+        lastTwoFingerDate = [NSDate date];
+    } else {
+        trackpadHasTwoFingers = FALSE;
     }
 
     static int thumbId = -1;
@@ -2696,8 +2699,8 @@ static void magicTrackpadRemoved(void* refCon, io_iterator_t iterator) {
 
 static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
     if (type == kCGEventLeftMouseDown) {
-        double timeInterval = fabs([lastGestureDate timeIntervalSinceNow]);
-        bool suppress = trackpadHasGesture || timeInterval < 0.05;
+        double timeInterval = fabs([lastTwoFingerDate timeIntervalSinceNow]);
+        bool suppress = trackpadHasTwoFingers || timeInterval < 0.05;
         if (suppress) {
             if (logLevel >= LOG_LEVEL_DEBUG)
                 dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{NSLog(@"Suppressed MouseDown with %d fingers d=%f t=%f", trackpadNFingers, twoFingersDistance, timeInterval);});
@@ -2958,7 +2961,8 @@ CFMutableArrayRef deviceList;
 
         systemWideElement = AXUIElementCreateSystemWide();
 
-        lastGestureDate = [NSDate date];
+        lastTwoFingerDate = [NSDate date];
+        lastThreeFingerDate = [NSDate date];
 
         // Character Recognizer
         initNormPdf();
