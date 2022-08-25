@@ -7,3 +7,4 @@ sed -i '' "s/\"Version [-0-9A-Za-z.]*\"/\"Version $CURRENT_PROJECT_VERSION\"/g" 
 
 git add jitouch/Jitouch/Jitouch.xcodeproj/project.pbxproj prefpane/Base.lproj/JitouchPref.xib prefpane/Jitouch.xcodeproj/project.pbxproj
 git commit -m "Bump version: $CURRENT_PROJECT_VERSION"
+git tag -s "v$CURRENT_PROJECT_VERSION" -m "Jitouch v$CURRENT_PROJECT_VERSION"
