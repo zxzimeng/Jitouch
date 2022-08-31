@@ -30,7 +30,6 @@
 #define py normalized.pos.y
 #define HS(a)  ((a * 7907 + 7883) % 4493)
 #define CFSafeRelease(a) if (a)CFRelease(a);
-#define MAX3(a,b,c) ( MAX(a, MAX(b,c)) )
 
 #define MIDDLEBUTTONDOWN 1
 #define LEFTBUTTONDOWN 2
