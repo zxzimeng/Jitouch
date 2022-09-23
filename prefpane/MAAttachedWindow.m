@@ -337,7 +337,7 @@
                                  flipped:NO
                           drawingHandler:???];
  */
-    return [NSColor lightGrayColor];  // Return static color for now.
+    return _MABackgroundColor;  // Return static color for now.
 }
 
 

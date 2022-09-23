@@ -17,22 +17,8 @@
     if (attachedWindow) {
         [gesturePreviewView stopTimer];
         gesturePreviewView = nil;
-        NSWindow *localAttachedWindow = attachedWindow;
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            float alpha = 1.0;
-            for (int i = 0; i < 10; i++) {
-                alpha -= 0.1;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [localAttachedWindow setAlphaValue:alpha];
-                });
-                usleep(20 * 1000);
-            }
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [[self window] removeChildWindow:localAttachedWindow];
-                [localAttachedWindow orderOut:self];
-                [localAttachedWindow release];
-            });
-        });
+        [attachedWindow orderOut:self];
+        [[self window] removeChildWindow:attachedWindow];
         attachedWindow = nil;
     }
     saveRowIndex = -1;
