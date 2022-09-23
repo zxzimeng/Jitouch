@@ -1587,7 +1587,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
                                                      starty[r] - data[r].py
                                                      );
             if (deltacosine < 0.1 && lenl > 0.005 && lenr > 0.003) { //ring finger is harder to move
-                if (curlen-startlen > 0.15 && type != 5) {
+                if (curlen-startlen > 0.455 * charRegIndexRingDistance && type != 5) {
                     dispatchCommand(@"Three-Finger Pinch-Out", TRACKPAD);
                     type = 5;
 
@@ -1601,7 +1601,7 @@ static void gestureTrackpadSwipeThreeFingers(const Finger *data, int nFingers) {
                             r = i;
                         }
                     }
-                } else if (curlen-startlen < -0.15 && type != 6) {
+                } else if (curlen-startlen < -0.455 * charRegIndexRingDistance && type != 6) {
                     dispatchCommand(@"Three-Finger Pinch-In", TRACKPAD);
                     type = 6;
 
