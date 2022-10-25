@@ -541,11 +541,9 @@
         [commitButton setEnabled:YES];
     }
 
-    [NSApp beginSheet: commandSheet
-       modalForWindow: window
-        modalDelegate: self
-       didEndSelector: @selector(didEndSheet:returnCode:contextInfo:)
-          contextInfo: nil];
+    [window beginSheet:commandSheet completionHandler:^(NSModalResponse returnCode) {
+        [self didEndSheet:commandSheet returnCode:returnCode contextInfo:nil];
+    }];
 }
 
 - (IBAction)okUrlWindow:(id)sender {
@@ -731,11 +729,9 @@
             [urlWindowOk setAction:@selector(okUrlWindow:)];
             [urlWindowCancel setTarget:self];
             [urlWindowCancel setAction:@selector(cancelUrlWindow:)];
-            [NSApp beginSheet: urlWindow
-               modalForWindow: commandSheet
-                modalDelegate: self
-               didEndSelector: @selector(didEndSheet:returnCode:contextInfo:)
-                  contextInfo: nil];
+            [commandSheet beginSheet:urlWindow completionHandler:^(NSModalResponse returnCode) {
+                [self didEndSheet:urlWindow returnCode:returnCode contextInfo:nil];
+            }];
         }
     } else if (sender == shortcutTextField && ![[shortcutTextField stringValue] isEqualToString:@""]) {
         //[actionButton selectItemWithTitle:@"-"];
@@ -815,7 +811,9 @@
     [alert setMessageText:@"Restore default settings?"];
     [alert setInformativeText:@"Your current Magic Mouse settings will be deleted."];
     [alert setAlertStyle:NSAlertStyleWarning];
-    [alert beginSheetModalForWindow:window modalDelegate:self didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
+        [self alertDidEnd:alert returnCode:returnCode contextInfo:nil];
+    }];
 }
 
 - (void)alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
