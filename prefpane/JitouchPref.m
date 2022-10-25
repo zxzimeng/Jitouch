@@ -57,7 +57,7 @@ CFMachPortRef eventTap;
             [self loadJitouchLaunchAgent];
         }
     } else if (sender == cbShowIcon) {
-        int value = [sender state] == NSOnState ? 1: 0;
+        int value = [sender state] == NSControlStateValueOn ? 1: 0;
         [Settings setKey:@"ShowIcon" withInt:value];
     } else if (sender == sdClickSpeed) {
         clickSpeed = 0.5 - [sender floatValue];

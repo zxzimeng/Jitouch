@@ -48,7 +48,7 @@
     contentRect.size = [view frame].size;
 
     if ((self = [super initWithContentRect:contentRect
-                                 styleMask:NSBorderlessWindowMask
+                                 styleMask:NSWindowStyleMaskBorderless
                                    backing:NSBackingStoreBuffered
                                      defer:NO])) {
         _view = view;
@@ -64,7 +64,6 @@
         [self setAlphaValue:1.0];
         [self setOpaque:NO];
         [self setHasShadow:YES];
-        [self useOptimizedDrawing:YES];
 
         // Set up some sensible defaults for display.
         _MABackgroundColor = [MAATTACHEDWINDOW_DEFAULT_BACKGROUND_COLOR copy];
@@ -318,13 +317,13 @@
     // Call NSWindow's implementation of -setBackgroundColor: because we override
     // it in this class to let us set the entire background image of the window
     // as an NSColor patternImage.
-    NSDisableScreenUpdates();
+//    NSDisableScreenUpdates();  // deprecated; no longer needed as of 10.11
     [super setBackgroundColor:[self _backgroundColorPatternImage]];
     if ([self isVisible]) {
         [self display];
         [self invalidateShadow];
     }
-    NSEnableScreenUpdates();
+//    NSEnableScreenUpdates();  // deprecated; no longer needed as of 10.11
 }
 
 
@@ -496,10 +495,10 @@
     }
 
     _resizing = YES;
-    NSDisableScreenUpdates();
+//    NSDisableScreenUpdates();  // deprecated; no longer needed as of 10.11
     [self _updateGeometry];
     [self _updateBackground];
-    NSEnableScreenUpdates();
+//    NSEnableScreenUpdates();  // deprecated; no longer needed as of 10.11
     _resizing = NO;
 }
 
@@ -561,10 +560,10 @@
     // Thanks to Martin Redington.
     _point = point;
     _side = side;
-    NSDisableScreenUpdates();
+//    NSDisableScreenUpdates();  // deprecated; no longer needed as of 10.11
     [self _updateGeometry];
     [self _updateBackground];
-    NSEnableScreenUpdates();
+//    NSEnableScreenUpdates();  // deprecated; no longer needed as of 10.11
 }
 
 

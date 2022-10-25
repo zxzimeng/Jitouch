@@ -9,7 +9,7 @@
 #import <CoreFoundation/CFPreferences.h>
 #import <CoreFoundation/CoreFoundation.h>
 
-#define ADD_GESTURE(a, gesture, command) [a addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:gesture, @"Gesture", command, @"Command", @YES, @"IsAction", @0, @"ModifierFlags", @0, @"KeyCode", [NSNumber numberWithInt:NSOnState], @"Enable", nil]];
+#define ADD_GESTURE(a, gesture, command) [a addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:gesture, @"Gesture", command, @"Command", @YES, @"IsAction", @0, @"ModifierFlags", @0, @"KeyCode", [NSNumber numberWithInt:NSControlStateValueOn], @"Enable", nil]];
 
 NSMutableDictionary *settings;
 NSMutableDictionary *trackpadMap;
@@ -382,12 +382,12 @@ static int notSynchronize;
         hasPreviousVersion = YES; //may have .. because the previous version doesn't have plist
     } else {
         NSData *plistXML = [[NSFileManager defaultManager] contentsAtPath:plistPath];
-        NSString *errorDesc = nil;
+        NSError *error = nil;
         [settings setDictionary:[NSPropertyListSerialization
-                                 propertyListFromData:plistXML
-                                 mutabilityOption:NSPropertyListMutableContainersAndLeaves
+                                 propertyListWithData:plistXML
+                                 options:NSPropertyListMutableContainersAndLeaves
                                  format:NULL
-                                 errorDescription:&errorDesc]];
+                                 error:&error]];
     }
 
     if (isPrefPane) {
@@ -399,19 +399,19 @@ static int notSynchronize;
                                                otherButton:nil
                                  informativeTextWithFormat:@"Your jitouch preference file is out of date. Would you like to use the new default settings? Your current settings will be permanently deleted.\n\nAlternately, you may later click \"Restore Defaults\" to use the new default settings."];
             NSModalResponse response = [alert runModal];
-            if (response == NSOKButton) {
+            if (response == NSModalResponseOK) {
                 NSLog(@"Received OK, creating default plist.");
                 [Settings createDefaultPlist];
                 [settings release];
                 NSData *plistXML = [[NSFileManager defaultManager] contentsAtPath:plistPath];
                 settings = [[NSMutableDictionary alloc] init];
 
-                NSString *errorDesc = nil;
+                NSError *error = nil;
                 [settings setDictionary:[NSPropertyListSerialization
-                                         propertyListFromData:plistXML
-                                         mutabilityOption:NSPropertyListMutableContainersAndLeaves
+                                         propertyListWithData:plistXML
+                                         options:NSPropertyListMutableContainersAndLeaves
                                          format:NULL
-                                         errorDescription:&errorDesc]];
+                                         error:&error]];
                 hasPreviousVersion = YES;
             }
         }

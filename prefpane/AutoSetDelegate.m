@@ -143,11 +143,11 @@ static int callback(int device, Finger *data, int nFingers, double timestamp, in
         [Settings setKey:@"charRegMouseButton" withInt:charRegMouseButton];
         [Settings noteSettingsUpdated];
     } else if (sender == oneDrawing) {
-        enOneDrawing = ([sender state] == NSOnState);
+        enOneDrawing = ([sender state] == NSControlStateValueOn);
         [Settings setKey:@"enOneDrawing" withInt:enOneDrawing];
         [Settings noteSettingsUpdated];
     } else if (sender == twoDrawing) {
-        enTwoDrawing = ([sender state] == NSOnState);
+        enTwoDrawing = ([sender state] == NSControlStateValueOn);
         [Settings setKey:@"enTwoDrawing" withInt:enTwoDrawing];
         [Settings noteSettingsUpdated];
     }
