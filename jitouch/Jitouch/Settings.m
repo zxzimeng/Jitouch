@@ -283,12 +283,12 @@ static int notSynchronize;
     NSString *plistPath = [@"~/Library/Preferences/com.jitouch.Jitouch.plist" stringByStandardizingPath];
 
     NSData *plistXML = [[NSFileManager defaultManager] contentsAtPath:plistPath];
-    NSString *errorDesc = nil;
+    NSError *error = nil;
     NSDictionary *newSettings = [NSPropertyListSerialization
-                             propertyListFromData:plistXML
-                             mutabilityOption:NSPropertyListMutableContainersAndLeaves
+                             propertyListWithData:plistXML
+                             options:NSPropertyListMutableContainersAndLeaves
                              format:NULL
-                             errorDescription:&errorDesc];
+                             error:&error];
     [Settings loadSettings2:newSettings];
 }
 

@@ -35,7 +35,7 @@ int cursorImageType;
     } else if (cursorImageType == 2) {
         image = tabImage;
     }
-    [image drawAtPoint:NSZeroPoint fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
+    [image drawAtPoint:NSZeroPoint fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0];
     [[self window] setHasShadow:NO];
 }
 

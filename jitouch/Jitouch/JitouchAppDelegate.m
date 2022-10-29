@@ -87,7 +87,7 @@ CGKeyCode keyMap[128]; // for dvorak support
         NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:@"Can't find the jitouch preference panel."];
         [alert setInformativeText:@"Please reinstall jitouch."];
-        [alert setAlertStyle:NSWarningAlertStyle];
+        [alert setAlertStyle:NSAlertStyleWarning];
         [NSApp activateIgnoringOtherApps:YES];
         [alert runModal];
         [alert release];

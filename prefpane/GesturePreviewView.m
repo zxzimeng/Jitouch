@@ -29,7 +29,7 @@ static inline float mylen(float dx, float dy) {
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    CGContextRef myContext = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextRef myContext = [[NSGraphicsContext currentContext] CGContext];
 
     double time = counter*0.02;
     static double accumT;

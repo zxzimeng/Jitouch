@@ -251,10 +251,10 @@
             }
             if (foundEnable) {
                 if (foundDisable)
-                    return [NSNumber numberWithInt:NSMixedState];
-                return [NSNumber numberWithInt:NSOnState];
+                    return [NSNumber numberWithInt:NSControlStateValueMixed];
+                return [NSNumber numberWithInt:NSControlStateValueOn];
             }
-            return [NSNumber numberWithInt:NSOffState];
+            return [NSNumber numberWithInt:NSControlStateValueOff];
 
         }
     } else {
@@ -286,10 +286,10 @@
             }
             if (foundDisable) {
                 for (NSDictionary *gesture in [item objectForKey:@"Gestures"])
-                    [gesture setValue:[NSNumber numberWithInteger:NSOnState] forKey:@"Enable"];
+                    [gesture setValue:[NSNumber numberWithInteger:NSControlStateValueOn] forKey:@"Enable"];
             } else {
                 for (NSDictionary *gesture in [item objectForKey:@"Gestures"])
-                    [gesture setValue:[NSNumber numberWithInteger:NSOffState] forKey:@"Enable"];
+                    [gesture setValue:[NSNumber numberWithInteger:NSControlStateValueOff] forKey:@"Enable"];
             }
             [outlineView reloadItem:nil reloadChildren:YES];
         }
@@ -320,12 +320,12 @@
             //return;
             if (foundEnable) {
                 if (foundDisable)
-                    [cell setState:NSMixedState];
+                    [cell setState:NSControlStateValueMixed];
                 else
-                    [cell setState:NSOnState];
+                    [cell setState:NSControlStateValueOn];
                 return;
             }
-            [cell setState:NSOffState];
+            [cell setState:NSControlStateValueOff];
 
         }
     } else {
@@ -579,11 +579,9 @@
         [commitButton setEnabled:YES];
     }
 
-    [NSApp beginSheet: commandSheet
-       modalForWindow: window
-        modalDelegate: self
-       didEndSelector: @selector(didEndSheet:returnCode:contextInfo:)
-          contextInfo: nil];
+    [window beginSheet:commandSheet completionHandler:^(NSModalResponse returnCode) {
+        [self didEndSheet:commandSheet returnCode:returnCode contextInfo:nil];
+    }];
 }
 
 - (IBAction)okUrlWindow:(id)sender {
@@ -629,7 +627,7 @@
                       [NSNumber numberWithBool:YES], @"IsAction",
                       [NSNumber numberWithUnsignedInteger:0], @"ModifierFlags",
                       [NSNumber numberWithUnsignedShort:0], @"KeyCode",
-                      [NSNumber numberWithInt:NSOnState], @"Enable",
+                      [NSNumber numberWithInt:NSControlStateValueOn], @"Enable",
                       nil];
         if (openFilePath) {
             [newCommand setObject:openFilePath forKey:@"OpenFilePath"];
@@ -646,7 +644,7 @@
                       [NSNumber numberWithBool:NO], @"IsAction",
                       [NSNumber numberWithUnsignedInteger:shortcutTextField.modifierFlags], @"ModifierFlags",
                       [NSNumber numberWithUnsignedShort:shortcutTextField.keyCode], @"KeyCode",
-                      [NSNumber numberWithInt:NSOnState], @"Enable",
+                      [NSNumber numberWithInt:NSControlStateValueOn], @"Enable",
                       nil];
     }
 
@@ -768,7 +766,7 @@
             [oPanel setCanChooseDirectories:YES];
             NSModalResponse result = [oPanel runModal];
 
-            if (result == NSOKButton) {
+            if (result == NSModalResponseOK) {
                 openFilePath = [[[oPanel URL] path] copy]; //TODO: mem leak
                 openURL = nil;
                 [self loadActionButton];
@@ -785,11 +783,9 @@
             [urlWindowOk setAction:@selector(okUrlWindow:)];
             [urlWindowCancel setTarget:self];
             [urlWindowCancel setAction:@selector(cancelUrlWindow:)];
-            [NSApp beginSheet: urlWindow
-               modalForWindow: commandSheet
-                modalDelegate: self
-               didEndSelector: @selector(didEndSheet:returnCode:contextInfo:)
-                  contextInfo: nil];
+            [commandSheet beginSheet:urlWindow completionHandler:^(NSModalResponse returnCode) {
+                [self didEndSheet:urlWindow returnCode:returnCode contextInfo:nil];
+            }];
         }
     } else if (sender == shortcutTextField && ![[shortcutTextField stringValue] isEqualToString:@""]) {
         //[actionButton selectItemWithTitle:@"-"];
@@ -801,7 +797,7 @@
             [oPanel setAllowedFileTypes:@[@"app"]];
             NSModalResponse result = [oPanel runModal];
 
-            if (result == NSOKButton) {
+            if (result == NSModalResponseOK) {
                 NSString* path = [[oPanel URL] path];
                 [applicationButton addApplication:path];
             } else {
@@ -815,7 +811,7 @@
         enHanded = (int)[sender selectedColumn];
         [Settings setKey:@"Handed" withInt:(int)[sender selectedColumn]];
     } else if (sender == cbAll) {
-        enTPAll = [sender state] == NSOnState ? 1: 0;
+        enTPAll = [sender state] == NSControlStateValueOn ? 1: 0;
         [Settings setKey:@"enTPAll" withInt:enTPAll];
         [self enUpdated];
     }
@@ -840,8 +836,10 @@
     [alert addButtonWithTitle:@"Cancel"];
     [alert setMessageText:@"Restore default settings?"];
     [alert setInformativeText:@"Your current trackpad settings will be deleted."];
-    [alert setAlertStyle:NSWarningAlertStyle];
-    [alert beginSheetModalForWindow:window modalDelegate:self didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [alert setAlertStyle:NSAlertStyleWarning];
+    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
+        [self alertDidEnd:alert returnCode:returnCode contextInfo:nil];
+    }];
 }
 
 - (void)alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {

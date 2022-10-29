@@ -18,7 +18,7 @@ static float magicMouseHeight = 800;
 
 - (id)init {
     NSSize size = [[NSScreen mainScreen] frame].size;
-    self = [super initWithContentRect:NSMakeRect(size.width/2 - trackpadWidth/2, size.height/2 - trackpadHeight/2, trackpadWidth, trackpadHeight) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO];
+    self = [super initWithContentRect:NSMakeRect(size.width/2 - trackpadWidth/2, size.height/2 - trackpadHeight/2, trackpadWidth, trackpadHeight) styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO];
     if (self != nil) {
         self.alphaValue = 1.0;
         self.opaque = NO;

@@ -11,7 +11,7 @@
 @implementation CursorWindow
 
 - (id)init {
-    self = [super initWithContentRect:NSMakeRect(0.0, 0.0, 100.0, 100.0) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO];
+    self = [super initWithContentRect:NSMakeRect(0.0, 0.0, 100.0, 100.0) styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO];
     if (self != nil) {
         self.alphaValue = 1.0;
         self.opaque = NO;

@@ -84,7 +84,7 @@
         imageFrame.size = imageSize;
 
         imageFrame.origin.y += ceil((cellFrame.size.height - imageFrame.size.height) / 2);
-        [image drawInRect:imageFrame fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+        [image drawInRect:imageFrame fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
     }
     [super drawWithFrame:cellFrame inView:controlView];
 }
