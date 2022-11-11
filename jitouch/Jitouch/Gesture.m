@@ -2906,20 +2906,8 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             NSLog(@"Received kCGEventTapDisabledByTimeout; attempting to recreate CGEventTap. Allow Jitouch in System Preferences -> Privacy -> Accessibility.");
             CFMachPortInvalidate(eventTap);
             CFRelease(eventTap);
-            CFMachPortRef newEventTap = nil;
-            int i = 0;
-            while (newEventTap == nil) {
-                if (i < 360) {
-                    sleep(1);
-                } else {
-                    sleep(360);
-                }
-                newEventTap = [me createEventTap];
-                i++;
-            }
-            NSLog(@"CGEventTap created");
-            eventTap = newEventTap;
-            recreatingEventTap = FALSE;
+            eventTapTries = 0;
+            [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
         });
         return NULL;
     }
@@ -3026,6 +3014,21 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
     return eventTap;
 }
 
+int eventTapTries = 0;
+
+- (void)createEventTapTimer:(NSTimer *)timer {
+    CFMachPortRef newEventTap = nil;
+    newEventTap = [me createEventTap];
+    if (newEventTap == nil && eventTapTries < 360) {
+        eventTapTries++;
+        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
+    } else {
+        NSLog(@"CGEventTap created");
+        eventTap = newEventTap;
+        recreatingEventTap = FALSE;
+    }
+}
+
 #pragma mark - Init
 CFMutableArrayRef deviceList;
 
@@ -3124,19 +3127,9 @@ CFMutableArrayRef deviceList;
         eventTap = [me createEventTap];
         if (eventTap == nil) {
             NSLog(@"Could not create CGEventTap. Allow Jitouch in System Preferences -> Privacy -> Accessibility.");
-            CFMachPortRef newEventTap = nil;
-            int i = 0;
-            while (newEventTap == nil) {
-                if (i < 360) {
-                    sleep(1);
-                } else {
-                    sleep(360);
-                }
-                newEventTap = [me createEventTap];
-                i++;
-            }
-            NSLog(@"CGEventTap created");
-            eventTap = newEventTap;
+            recreatingEventTap = TRUE;
+            eventTapTries = 0;
+            [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
         }
 
         gestureWindow = [[GestureWindow alloc] init];
