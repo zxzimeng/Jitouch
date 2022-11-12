@@ -2651,13 +2651,12 @@ static int magicMouseCallback(int device, Finger *data, int nFingers, double tim
 
 #pragma mark - Hardware Add/Remove Notifications
 
-int attemptMT;
-
 - (void)addMultitouchDevice:(NSTimer*)theTimer {
     BOOL found = NO;
-    NSDictionary* dict = [theTimer userInfo];
+    NSMutableDictionary* dict = [theTimer userInfo];
+    int attemptMT = [dict[@"Attempt"] intValue];
     uint64_t newDeviceMultitouchID = [dict[@"Multitouch ID"] unsignedIntegerValue];
-    if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Adding device: %"PRIu64, newDeviceMultitouchID);
+    if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Adding device: %"PRIu64", try %d", newDeviceMultitouchID, attemptMT);
 
     CFMutableArrayRef tempDeviceList = MTDeviceCreateList();
 
@@ -2730,8 +2729,9 @@ int attemptMT;
     CFRelease(tempDeviceList);
 
     if (!found && attemptMT < 3) {
-        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(addMultitouchDevice:) userInfo:dict repeats:NO];
         attemptMT++;
+        dict[@"Attempt"] = [NSNumber numberWithInt:attemptMT];
+        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(addMultitouchDevice:) userInfo:dict repeats:NO];
     }
 }
 
@@ -2764,15 +2764,11 @@ static void multitouchDeviceAdded(void* refCon, io_iterator_t iterator) {
 
         IOObjectRelease(newDevice);
 
-        attemptMT = 0;
-        NSDictionary* dict = @{@"Multitouch ID": [NSNumber numberWithInteger:deviceID]};
+        NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithDictionary:@{
+            @"Multitouch ID": [NSNumber numberWithInteger:deviceID],
+            @"Attempt": @0,
+        }];
         [NSTimer scheduledTimerWithTimeInterval:0.0 target:me selector:@selector(addMultitouchDevice:) userInfo:dict repeats:NO];
-
-        /*
-         magicMouseDevice = [deviceList lastObject];
-         MTRegisterContactFrameCallback(magicMouseDevice, magicMouseCallback);
-         MTDeviceStart(magicMouseDevice, 0);
-         */
     }
 }
 
