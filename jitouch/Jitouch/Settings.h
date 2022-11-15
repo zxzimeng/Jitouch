@@ -26,6 +26,7 @@ typedef enum log_level_t : int {
     LOG_LEVEL_DEFAULT = 0,
     LOG_LEVEL_INFO = 1,
     LOG_LEVEL_DEBUG = 2,
+    LOG_LEVEL_TRACE = 3,
 } log_level_t;
 
 //Trackpad
