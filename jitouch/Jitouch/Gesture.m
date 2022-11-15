@@ -25,6 +25,26 @@
 #define TRACKPAD 0
 #define MAGICMOUSE 1
 #define CHARRECOGNITION 2
+static const NSString* deviceTypeName[] = {@"trackpad", @"magicmouse", @"charrec"};
+
+static const int builtinTrackpadFamilyIDs[] = {
+    98, 99, 100, // built-in trackpad
+    101, // retina mbp
+    102, // retina macbook with the Force Touch trackpad (2015)
+    103, // retina mbp 13" with the Force Touch trackpad (2015)
+    104,
+    105, // macbook with touch bar, m1 pro mbp
+    113, // m2 mbp with touch bar
+};
+static const int magicMouseFamilyIDs[] = {
+    112, // magic mouse & magic mouse 2
+};
+static const int magicTrackpadFamilyIDs[] = {
+    128, // magic trackpad
+    129, // magic trackpad 2
+    130, // magic trackpad 3?
+};
+#define MINFAMILYID 98
 
 #define px normalized.pos.x
 #define py normalized.pos.y
@@ -155,7 +175,31 @@ static float cosineBetweenVectors(float v0x, float v0y, float v1x, float v1y) {
     return (v0x*v1x + v0y*v1y) / sqrtf((v0x*v0x + v0y*v0y) * (v1x*v1x + v1y*v1y));
 }
 
-static void turnOffTrackoad() {
+static bool familyIsBuiltinTrackpad(int familyID) {
+    for (int i = 0; i < sizeof(builtinTrackpadFamilyIDs) / sizeof(builtinTrackpadFamilyIDs[0]); i++) {
+        if(builtinTrackpadFamilyIDs[i] == familyID)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static bool familyIsMagicMouse(int familyID) {
+    for (int i = 0; i < sizeof(magicMouseFamilyIDs) / sizeof(magicMouseFamilyIDs[0]); i++) {
+        if(magicMouseFamilyIDs[i] == familyID)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static bool familyIsMagicTrackpad(int familyID) {
+    for (int i = 0; i < sizeof(magicTrackpadFamilyIDs) / sizeof(magicTrackpadFamilyIDs[0]); i++) {
+        if(magicTrackpadFamilyIDs[i] == familyID)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static void turnOffTrackpad() {
     trackpadNFingers = 0;
 }
 
@@ -178,7 +222,7 @@ static void turnOffCharacters() {
 }
 
 void turnOffGestures() {
-    turnOffTrackoad();
+    turnOffTrackpad();
     turnOffMagicMouse();
     turnOffCharacters();
 }
@@ -575,7 +619,7 @@ static void dispatchCommand(NSString *gesture, int device) {
         NSDate *start = [NSDate date];
         doCommand(gesture, device);
         NSTimeInterval timeInterval = -[start timeIntervalSinceNow];
-        if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"%@\" for device %d took %f s", gesture, device, timeInterval);
+        if (device >= 0 && device < sizeof(deviceTypeName) / sizeof(deviceTypeName[0]) && logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"%@\" for %@ took %f s", gesture, deviceTypeName[device], timeInterval);
     });
 }
 
@@ -2650,120 +2694,152 @@ static int magicMouseCallback(int device, Finger *data, int nFingers, double tim
 
 #pragma mark - Hardware Add/Remove Notifications
 
-static int attemptMM;
-
-- (void)updateDevicesMM:(NSTimer*)theTimer {
+- (void)addMultitouchDevice:(NSTimer*)theTimer {
     BOOL found = NO;
+    NSMutableDictionary* dict = [theTimer userInfo];
+    int attemptMT = [dict[@"Attempt"] intValue];
+    uint64_t newDeviceMultitouchID = [dict[@"Multitouch ID"] unsignedIntegerValue];
+    if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Adding device: %"PRIu64", try %d", newDeviceMultitouchID, attemptMT);
 
-    NSMutableArray* deviceList = (NSMutableArray*)MTDeviceCreateList();
-    for (NSUInteger i = 0; i < [deviceList count]; i++) {
-        MTDeviceRef device = [deviceList objectAtIndex:i];
-        //if (!MTDeviceIsRunning(device)) {
-            int familyID;
-            MTDeviceGetFamilyID(device, &familyID);
+    CFMutableArrayRef tempDeviceList = MTDeviceCreateList();
 
-            if (familyID == 112) { // magic mouse
-                MTRegisterContactFrameCallback(device, magicMouseCallback);
-                MTDeviceStart(device, 0);
-                found = YES;
-            }
-        //}
-    }
-
-    CFRelease((CFMutableArrayRef)deviceList);
-
-    if (!found && attemptMM < 3) {
-        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(updateDevicesMM:) userInfo:nil repeats:NO];
-        attemptMM++;
-    }
-}
-
-static void magicMouseAdded(void* refCon, io_iterator_t iterator) {
-    io_service_t device;
-    while ((device = IOIteratorNext(iterator))) {
-        IOObjectRelease(device);
-
-        attemptMM = 0;
-        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(updateDevicesMM:) userInfo:nil repeats:NO];
-
-        /*
-        magicMouseDevice = [deviceList lastObject];
-        MTRegisterContactFrameCallback(magicMouseDevice, magicMouseCallback);
-        MTDeviceStart(magicMouseDevice, 0);
-         */
-    }
-}
-
-static void magicMouseRemoved(void* refCon, io_iterator_t iterator) {
-    io_service_t object;
-    while ((object = IOIteratorNext(iterator))) {
-        IOObjectRelease(object);
-        /*
-        MTUnregisterContactFrameCallback(magicMouseDevice, magicMouseCallback);
-        MTDeviceStop(magicMouseDevice);
-        MTDeviceRelease(magicMouseDevice);
-        */
-        trigger = 0;
-        turnOffMagicMouse();
-    }
-}
-
-
-int attemptMT;
-
-- (void)updateDevicesMT:(NSTimer*)theTimer {
-    BOOL found = NO;
-
-    NSMutableArray* deviceList = (NSMutableArray*)MTDeviceCreateList();
-    for (NSUInteger i = 0; i < [deviceList count]; i++) {
-        MTDeviceRef device = [deviceList objectAtIndex:i];
-        //if (!MTDeviceIsRunning(device)) {
+    for (CFIndex i = 0; i < CFArrayGetCount(tempDeviceList); i++) {
+        MTDeviceRef device = (MTDeviceRef)CFArrayGetValueAtIndex(tempDeviceList, i);
         int familyID;
         MTDeviceGetFamilyID(device, &familyID);
+        uint64_t deviceID = 0;
+        MTDeviceGetDeviceID(device, &deviceID);
 
-        if (familyID == 128 || familyID == 129 || familyID == 130) { // magic trackpad
+        if (deviceID != newDeviceMultitouchID) {
+            continue;
+        }
+
+        CFIndex oldIndex = -1;
+        for (CFIndex i = 0; i < CFArrayGetCount(deviceList); i++) {
+            MTDeviceRef device = (MTDeviceRef)CFArrayGetValueAtIndex(deviceList, i);
+            uint64_t deviceID = 0;
+            MTDeviceGetDeviceID(device, &deviceID);
+            if (deviceID == newDeviceMultitouchID) {
+                if (MTDeviceIsRunning(device)) {
+                    if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Stop device %li %"PRIu64" family %d (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+                    if (familyID >= MINFAMILYID) {
+                        MTUnregisterContactFrameCallback(device, trackpadCallback);
+                        MTUnregisterContactFrameCallback(device, magicMouseCallback);
+                        MTDeviceStop(device);
+                    }
+                    if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Device %li %"PRIu64" family %d is %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+                }
+                oldIndex = i;
+                break;
+            }
+        }
+        if (oldIndex >= 0) {
+            CFArrayRemoveValueAtIndex(deviceList, oldIndex);
+        }
+
+        if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Start device %li %"PRIu64", family %d (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+        if (familyIsBuiltinTrackpad(familyID)) {
             MTRegisterContactFrameCallback(device, trackpadCallback);
             MTDeviceStart(device, 0);
-            found = YES;
+        } else if (familyIsMagicMouse(familyID)) {
+            MTRegisterContactFrameCallback(device, magicMouseCallback);
+            MTDeviceStart(device, 0);
+        } else if (familyIsMagicTrackpad(familyID)) {
+            MTRegisterContactFrameCallback(device, trackpadCallback);
+            MTDeviceStart(device, 0);
+        } else if (familyID >= MINFAMILYID) { // Unknown ID. Assume it's a trackpad.
+            MTRegisterContactFrameCallback(device, trackpadCallback);
+            MTDeviceStart(device, 0);
         }
-        //}
+        if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Device %li %"PRIu64" family %d is %s", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
+
+        if (familyID >= MINFAMILYID) {
+            found = YES;
+            CFArrayAppendValue(deviceList, device);
+        }
     }
 
-    CFRelease((CFMutableArrayRef)deviceList);
+    CFRelease(tempDeviceList);
 
     if (!found && attemptMT < 3) {
-        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(updateDevicesMT:) userInfo:nil repeats:NO];
         attemptMT++;
+        dict[@"Attempt"] = [NSNumber numberWithInt:attemptMT];
+        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(addMultitouchDevice:) userInfo:dict repeats:NO];
     }
 }
 
-static void magicTrackpadAdded(void* refCon, io_iterator_t iterator) {
-    io_service_t device;
-    while ((device = IOIteratorNext(iterator))) {
-        IOObjectRelease(device);
+static void multitouchDeviceAdded(void* refCon, io_iterator_t iterator) {
+    io_service_t newDevice;
+    while ((newDevice = IOIteratorNext(iterator))) {
+        io_name_t devName;
+        io_string_t pathName;
+        CFTypeRef deviceIDRef;
+        int familyID;
+        NSInteger deviceID = 0;
 
-        attemptMT = 0;
-        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(updateDevicesMT:) userInfo:nil repeats:NO];
+        IORegistryEntryGetName(newDevice, devName);
+//        NSLog(@"Device's name = %s\n", devName);
+        IORegistryEntryGetPath(newDevice, kIOServicePlane, pathName);
+//        NSLog(@"Device's path in IOService plane = %s\n", pathName);
 
-        /*
-         magicMouseDevice = [deviceList lastObject];
-         MTRegisterContactFrameCallback(magicMouseDevice, magicMouseCallback);
-         MTDeviceStart(magicMouseDevice, 0);
-         */
+        deviceIDRef = IORegistryEntrySearchCFProperty(newDevice, pathName, CFSTR("Family ID"), kCFAllocatorDefault, 0);
+        if (deviceIDRef != NULL) {
+            familyID = (int)[(NSString*)deviceIDRef integerValue];
+//            NSLog(@"Device's family ID = %@ -> %d", deviceIDRef, familyID);
+            CFRelease(deviceIDRef);
+        }
+        deviceIDRef = IORegistryEntrySearchCFProperty(newDevice, pathName, CFSTR("Multitouch ID"), kCFAllocatorDefault, 0);
+        if (deviceIDRef != NULL) {
+            deviceID = [(NSString*)deviceIDRef integerValue];
+//            NSLog(@"Device's multitouch ID = %@ -> %llu", deviceIDRef, (uint64_t)deviceID);
+            CFRelease(deviceIDRef);
+        }
+
+        IOObjectRelease(newDevice);
+
+        NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithDictionary:@{
+            @"Multitouch ID": [NSNumber numberWithInteger:deviceID],
+            @"Attempt": @0,
+        }];
+        [NSTimer scheduledTimerWithTimeInterval:0.0 target:me selector:@selector(addMultitouchDevice:) userInfo:dict repeats:NO];
     }
 }
 
-static void magicTrackpadRemoved(void* refCon, io_iterator_t iterator) {
-    io_service_t object;
-    while ((object = IOIteratorNext(iterator))) {
-        IOObjectRelease(object);
-        /*
-         MTUnregisterContactFrameCallback(magicMouseDevice, magicMouseCallback);
-         MTDeviceStop(magicMouseDevice);
-         MTDeviceRelease(magicMouseDevice);
-         */
+static void multitouchDeviceRemoved(void* refCon, io_iterator_t iterator) {
+    io_service_t removedDevice;
+    while ((removedDevice = IOIteratorNext(iterator))) {
+        io_name_t devName;
+        io_string_t pathName;
+        CFTypeRef deviceIDRef;
+        int familyID = -1;
+        NSInteger deviceID = 0;
+
+        IORegistryEntryGetName(removedDevice, devName);
+//        NSLog(@"Device's name = %s\n", devName);
+        IORegistryEntryGetPath(removedDevice, kIOServicePlane, pathName);
+//        NSLog(@"Device's path in IOService plane = %s\n", pathName);
+
+        deviceIDRef = IORegistryEntrySearchCFProperty(removedDevice, pathName, CFSTR("Family ID"), kCFAllocatorDefault, 0);
+        if (deviceIDRef != NULL) {
+            familyID = (int)[(NSString*)deviceIDRef integerValue];
+//            NSLog(@"Device's family ID = %@ -> %d", deviceIDRef, familyID);
+            CFRelease(deviceIDRef);
+        }
+        deviceIDRef = IORegistryEntrySearchCFProperty(removedDevice, pathName, CFSTR("Multitouch ID"), kCFAllocatorDefault, 0);
+        if (deviceIDRef != NULL) {
+            deviceID = [(NSString*)deviceIDRef integerValue];
+//            NSLog(@"Device's multitouch ID = %@ -> %"PRIu64, deviceIDRef, (uint64_t)deviceID);
+            CFRelease(deviceIDRef);
+        }
+
+        IOObjectRelease(removedDevice);
+
         trigger = 0;
-        //turnOffMagicMouse();
+        if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Device removed: %"PRIu64" family %d", (uint64_t)deviceID, familyID);
+        if (familyIsMagicMouse(familyID)) {
+            if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Turning off magic mouse");
+            turnOffMagicMouse();
+        }
     }
 }
 
@@ -2837,7 +2913,7 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
                 dispatchCommand(gesture, device);
                 return NULL;
             }
-            if (command != nil && logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"%@\" -> \"%@\" for device %d", gesture, command, device);
+            if (command != nil && logLevel >= LOG_LEVEL_INFO) NSLog(@"Gesture \"%@\" -> \"%@\" for %@", gesture, command, deviceTypeName[device]);
         }
 
 
@@ -2905,20 +2981,8 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             NSLog(@"Received kCGEventTapDisabledByTimeout; attempting to recreate CGEventTap. Allow Jitouch in System Preferences -> Privacy -> Accessibility.");
             CFMachPortInvalidate(eventTap);
             CFRelease(eventTap);
-            CFMachPortRef newEventTap = nil;
-            int i = 0;
-            while (newEventTap == nil) {
-                if (i < 360) {
-                    sleep(1);
-                } else {
-                    sleep(360);
-                }
-                newEventTap = [me createEventTap];
-                i++;
-            }
-            NSLog(@"CGEventTap created");
-            eventTap = newEventTap;
-            recreatingEventTap = FALSE;
+            eventTapTries = 0;
+            [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
         });
         return NULL;
     }
@@ -3025,6 +3089,21 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
     return eventTap;
 }
 
+int eventTapTries = 0;
+
+- (void)createEventTapTimer:(NSTimer *)timer {
+    CFMachPortRef newEventTap = nil;
+    newEventTap = [me createEventTap];
+    if (newEventTap == nil && eventTapTries < 360) {
+        eventTapTries++;
+        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
+    } else {
+        NSLog(@"CGEventTap created");
+        eventTap = newEventTap;
+        recreatingEventTap = FALSE;
+    }
+}
+
 #pragma mark - Init
 CFMutableArrayRef deviceList;
 
@@ -3051,26 +3130,16 @@ CFMutableArrayRef deviceList;
                 uint64_t deviceID = 0;
                 MTDeviceGetDeviceID(device, &deviceID);
                 if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Start device %li %"PRIu64" family %d (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
-                if (familyID == 98 || familyID == 99 || familyID == 100  // built-in trackpad
-                    || familyID == 101 // retina mbp
-                    || familyID == 102 // retina macbook with the Force Touch trackpad (2015)
-                    || familyID == 103 // retina mbp 13" with the Force Touch trackpad (2015)
-                    || familyID == 104
-                    || familyID == 105 // macbook with touch bar
-                    || familyID == 113) { // m2 mbp with touch bar
+                if (familyIsBuiltinTrackpad(familyID)) {
                     MTRegisterContactFrameCallback(device, trackpadCallback);
                     MTDeviceStart(device, 0);
-                } else if (familyID == 112 // magic mouse & magic mouse 2
-                    ) {
+                } else if (familyIsMagicMouse(familyID)) {
                     MTRegisterContactFrameCallback(device, magicMouseCallback);
                     MTDeviceStart(device, 0);
-                } else if (familyID == 128 // magic trackpad
-                    || familyID == 129 // magic trackpad 2
-                    || familyID == 130 // magic trackpad 3?
-                    ) {
+                } else if (familyIsMagicTrackpad(familyID)) {
                     MTRegisterContactFrameCallback(device, trackpadCallback);
                     MTDeviceStart(device, 0);
-                } else if (familyID >= 98) { // Unknown ID. Assume it's a trackpad.
+                } else if (familyID >= MINFAMILYID) { // Unknown ID. Assume it's a trackpad.
                     MTRegisterContactFrameCallback(device, trackpadCallback);
                     MTDeviceStart(device, 0);
                 }
@@ -3091,51 +3160,31 @@ CFMutableArrayRef deviceList;
         CFRunLoopAddSource(CFRunLoopGetCurrent(), notificationRunLoopSource, kCFRunLoopDefaultMode);
 
         {
-            CFMutableDictionaryRef matchingDict = IOServiceNameMatching("BNBMouseDevice");
+            CFMutableDictionaryRef matchingDict = IOServiceNameMatching("AppleMultitouchDevice");
             matchingDict = (CFMutableDictionaryRef) CFRetain(matchingDict);
 
-            //MagicMouse added notification
-            io_iterator_t magicMouseAddedIterator;
-            IOServiceAddMatchingNotification(notificationObject, kIOFirstMatchNotification, matchingDict, magicMouseAdded, NULL, &magicMouseAddedIterator);
-            magicMouseAdded(NULL, magicMouseAddedIterator);
+            //Device added notification
+            io_iterator_t multitouchDeviceAddedIterator;
+            IOServiceAddMatchingNotification(notificationObject, kIOFirstMatchNotification, matchingDict, multitouchDeviceAdded, NULL, &multitouchDeviceAddedIterator);
+            io_service_t device;
+            while ((device = IOIteratorNext(multitouchDeviceAddedIterator))) {
+                // Remove existing devices; already added
+                IOObjectRelease(device);
+            }
+            multitouchDeviceAdded(NULL, multitouchDeviceAddedIterator);
 
-            //MagicMouse removed notification
-            io_iterator_t magicMouseRemovedIterator;
-            IOServiceAddMatchingNotification(notificationObject, kIOTerminatedNotification, matchingDict, magicMouseRemoved, NULL, &magicMouseRemovedIterator);
-            magicMouseRemoved(NULL, magicMouseRemovedIterator);
-        }
-
-        {
-            CFMutableDictionaryRef matchingDict = IOServiceNameMatching("BNBTrackpadDevice");
-            matchingDict = (CFMutableDictionaryRef) CFRetain(matchingDict);
-
-            //MagicTrackpad added notification
-            io_iterator_t magicTrackpadAddedIterator;
-            IOServiceAddMatchingNotification(notificationObject, kIOFirstMatchNotification, matchingDict, magicTrackpadAdded, NULL, &magicTrackpadAddedIterator);
-            magicTrackpadAdded(NULL, magicTrackpadAddedIterator);
-
-            //MagicTrackpad removed notification
-            io_iterator_t magicTrackpadRemovedIterator;
-            IOServiceAddMatchingNotification(notificationObject, kIOTerminatedNotification, matchingDict, magicTrackpadRemoved, NULL, &magicTrackpadRemovedIterator);
-            magicTrackpadRemoved(NULL, magicTrackpadRemovedIterator);
+            //Device removed notification
+            io_iterator_t multitouchDeviceRemovedIterator;
+            IOServiceAddMatchingNotification(notificationObject, kIOTerminatedNotification, matchingDict, multitouchDeviceRemoved, NULL, &multitouchDeviceRemovedIterator);
+            multitouchDeviceRemoved(NULL, multitouchDeviceRemovedIterator);
         }
 
         eventTap = [me createEventTap];
         if (eventTap == nil) {
             NSLog(@"Could not create CGEventTap. Allow Jitouch in System Preferences -> Privacy -> Accessibility.");
-            CFMachPortRef newEventTap = nil;
-            int i = 0;
-            while (newEventTap == nil) {
-                if (i < 360) {
-                    sleep(1);
-                } else {
-                    sleep(360);
-                }
-                newEventTap = [me createEventTap];
-                i++;
-            }
-            NSLog(@"CGEventTap created");
-            eventTap = newEventTap;
+            recreatingEventTap = TRUE;
+            eventTapTries = 0;
+            [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
         }
 
         gestureWindow = [[GestureWindow alloc] init];
@@ -3155,7 +3204,7 @@ CFMutableArrayRef deviceList;
         uint64_t deviceID = 0;
         MTDeviceGetDeviceID(device, &deviceID);
         if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Stop device %li %"PRIu64" family %d (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
-        if (familyID >= 98) {
+        if (familyID >= MINFAMILYID) {
             MTUnregisterContactFrameCallback(device, trackpadCallback);
             MTUnregisterContactFrameCallback(device, magicMouseCallback);
             MTDeviceStop(device);
@@ -3172,26 +3221,16 @@ CFMutableArrayRef deviceList;
         uint64_t deviceID = 0;
         MTDeviceGetDeviceID(device, &deviceID);
         if (logLevel >= LOG_LEVEL_INFO) NSLog(@"Start device %li %"PRIu64", family %d (%s)", (long)i, deviceID, familyID, (MTDeviceIsRunning(device)) ? "running" : "not running");
-        if (familyID == 98 || familyID == 99 || familyID == 100  // built-in trackpad
-            || familyID == 101 // retina mbp
-            || familyID == 102 // retina macbook with the Force Touch trackpad (2015)
-            || familyID == 103 // retina mbp 13" with the Force Touch trackpad (2015)
-            || familyID == 104
-            || familyID == 105 // macbook with touch bar
-            || familyID == 113) { // m2 mbp with touch bar
+        if (familyIsBuiltinTrackpad(familyID)) {
             MTRegisterContactFrameCallback(device, trackpadCallback);
             MTDeviceStart(device, 0);
-        } else if (familyID == 112 // magic mouse & magic mouse 2
-            ) {
+        } else if (familyIsMagicMouse(familyID)) {
             MTRegisterContactFrameCallback(device, magicMouseCallback);
             MTDeviceStart(device, 0);
-        } else if (familyID == 128 // magic trackpad
-            || familyID == 129 // magic trackpad 2
-            || familyID == 130 // magic trackpad 3?
-            ) {
+        } else if (familyIsMagicTrackpad(familyID)) {
             MTRegisterContactFrameCallback(device, trackpadCallback);
             MTDeviceStart(device, 0);
-        } else if (familyID >= 98) { // Unknown ID. Assume it's a trackpad.
+        } else if (familyID >= MINFAMILYID) { // Unknown ID. Assume it's a trackpad.
             MTRegisterContactFrameCallback(device, trackpadCallback);
             MTDeviceStart(device, 0);
         }

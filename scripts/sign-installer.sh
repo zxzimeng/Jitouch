@@ -5,6 +5,10 @@ OBJROOT=build/staging
 PRODUCT_BUNDLE_IDENTIFIER="com.jitouch.Jitouch"
 signing_cert="Developer ID Installer: Aaron Kollasch (5UQY3B3594)"
 
+zip "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane.zip" "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane"
+xcrun notarytool submit "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane.zip" --keychain-profile "aaron@kollasch.dev" --wait
+xcrun stapler staple "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane"
+
 rm -rf "$OBJROOT"/*
 mkdir -p "$OBJROOT/pkg_staging/"
 cp -rp ${BUILT_PRODUCTS_DIR}/Jitouch.prefPane ${OBJROOT}/pkg_staging/Jitouch.prefPane
