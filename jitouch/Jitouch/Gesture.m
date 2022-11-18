@@ -64,16 +64,36 @@ static const int magicTrackpadFamilyIDs[] = {
 // to suppress "'CGPostKeyboardEvent' is deprecated" warnings
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
+#ifdef DEBUG
+#define DEBUG TRUE
+#else
+#define DEBUG FALSE
+#endif
+
 @implementation Gesture
 
 // Based on the code at http://steike.com/code/multitouch
 typedef struct { float x, y; } MTPoint;
 typedef struct { MTPoint pos, vel; } MTReadout;
 
+enum {
+    MTTouchStateNotTracking = 0,
+    MTTouchStateStartInRange = 1,
+    MTTouchStateHoverInRange = 2,
+    MTTouchStateMakeTouch = 3,
+    MTTouchStateTouching = 4,
+    MTTouchStateBreakTouch = 5,
+    MTTouchStateLingerInRange = 6,
+    MTTouchStateOutOfRange = 7
+};
+typedef uint32_t MTTouchState;
+
 typedef struct {
     int frame;
     double timestamp;
-    int identifier, state, fingerId, handId;
+    int identifier;
+    MTTouchState state;
+    int fingerId, handId;
     MTReadout normalized;
     float size;
     int zero1;
@@ -83,8 +103,8 @@ typedef struct {
     float zDensity;
 } Finger;
 
-typedef void *MTDeviceRef;
-typedef int (*MTContactCallbackFunction)(int, Finger*, int, double, int);
+typedef CFTypeRef *MTDeviceRef;
+typedef int (*MTContactCallbackFunction)(MTDeviceRef, Finger*, int, double, int);
 
 MTDeviceRef MTDeviceCreateDefault(void);
 CFMutableArrayRef MTDeviceCreateList(void);
@@ -1961,7 +1981,8 @@ static void gestureTrackpadAutoScroll(const Finger *data, int nFingers, double t
 }
 
 
-static int trackpadCallback(int device, Finger *data, int nFingers, double timestamp, int frame) {
+static int trackpadCallback(MTDeviceRef device, Finger *data, int nFingers, double timestamp, int frame) {
+    if (DEBUG && logLevel >= LOG_LEVEL_TRACE) NSLog(@"TrackpadCallback %p", device);
     trackpadNFingers = nFingers;
     if (nFingers == 2) {
         twoFingersDistance = lenSqrF(data, 0, 1);
@@ -2000,6 +2021,20 @@ static int trackpadCallback(int device, Finger *data, int nFingers, double times
                 trackpadRecognizerOne(data, nFingers, timestamp);
         }
 
+        // remove hovering and other touch events
+        for (int i = 0; i < nFingers; i++) {
+            if (
+                ! (
+                    data[i].state == MTTouchStateMakeTouch ||
+                    data[i].state == MTTouchStateTouching ||
+                    data[i].state == MTTouchStateBreakTouch
+                  )
+                ) {
+                if (DEBUG && logLevel >= LOG_LEVEL_TRACE) NSLog(@"Filtered %d %d %f %f", data[i].identifier, data[i].state, data[i].px, data[i].py);
+                data[i--] = data[--nFingers];
+            }
+        }
+
         // detect thumb & palm resting
         int cl, cli, tl, tli;
         float mY, mX;
@@ -2026,6 +2061,7 @@ static int trackpadCallback(int device, Finger *data, int nFingers, double times
             }
         }
         if (tl == 1 && nFingers > 1 && fabs(mX - data[tli].px) >= 0.25) {
+            if (DEBUG && logLevel >= LOG_LEVEL_TRACE) NSLog(@"Filtered %d %d %f %f", data[tli].identifier, data[tli].state, data[tli].px, data[tli].py);
             data[tli] = data[--nFingers];
         }
 
@@ -2033,6 +2069,7 @@ static int trackpadCallback(int device, Finger *data, int nFingers, double times
             int tmp = 1;
             for (int i = 0; i < nFingers; i++) {
                 if (data[i].identifier == thumbId) {
+                    if (DEBUG && logLevel >= LOG_LEVEL_TRACE) NSLog(@"Filtered thumb %d %d %f %f", data[i].identifier, data[i].state, data[i].px, data[i].py);
                     data[i] = data[--nFingers];
                     tmp = 0;
                     break;
@@ -2051,7 +2088,14 @@ static int trackpadCallback(int device, Finger *data, int nFingers, double times
             }
             if (cl == 1 && nFingers > 1 && mY-data[cli].py >= 0.4) {
                 thumbId = data[cli].identifier;
+                if (DEBUG && logLevel >= LOG_LEVEL_TRACE) NSLog(@"Filtered %d %d %f %f", data[cli].identifier, data[cli].state, data[cli].px, data[cli].py);
                 data[cli] = data[--nFingers];
+            }
+        }
+
+        if (DEBUG && logLevel >= LOG_LEVEL_TRACE) {
+            for (int i = 0; i < nFingers; i++) {
+                NSLog(@"MTTouch %d %d %d %f %f", i, data[i].identifier, data[i].state, data[i].px, data[i].py);
             }
         }
 
@@ -2643,7 +2687,7 @@ static int gestureMagicMouseOneFixOneTap(const Finger *data, int nFingers, doubl
 }
 
 
-static int magicMouseCallback(int device, Finger *data, int nFingers, double timestamp, int frame) {
+static int magicMouseCallback(MTDeviceRef device, Finger *data, int nFingers, double timestamp, int frame) {
     int ignore = 0;
 
     if (!enAll || !enMMAll) {
