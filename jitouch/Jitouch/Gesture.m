@@ -1029,8 +1029,16 @@ static void gestureTrackpadChangeSpace(const Finger *data, int nFingers) {
                 }
             } else {
 
-                if (lenSqr(data[mini].px, data[mini].py, last[0], last[1]) < 0.000001 &&
-                   (fabs(data[mini].px - fing[mini][0]) >= 0.07 || fabs(data[mini].py - fing[mini][1]) >= 0.08)) {
+                if (
+                    (
+                     lenSqr(data[mini].px, data[mini].py, last[0], last[1]) < 0.000001 ||
+                     data[mini].state == MTTouchStateBreakTouch
+                    ) &&
+                    (
+                     fabs(data[mini].px - fing[mini][0]) >= 0.07 * charRegIndexRingDistance / 0.33 ||
+                     fabs(data[mini].py - fing[mini][1]) >= 0.08 * charRegIndexRingDistance / 0.33
+                    )
+                ) {
                     float dx = fabs(fing[mini][0] - data[mini].px), dy = fabs(fing[mini][1] - data[mini].py);
                     if (dx > dy) {
                         if (fing[mini][0] < data[mini].px)
@@ -2095,7 +2103,7 @@ static int trackpadCallback(MTDeviceRef device, Finger *data, int nFingers, doub
 
         if (DEBUG && logLevel >= LOG_LEVEL_TRACE) {
             for (int i = 0; i < nFingers; i++) {
-                NSLog(@"MTTouch %d %d %d %f %f", i, data[i].identifier, data[i].state, data[i].px, data[i].py);
+                NSLog(@"MTTouch %d %d %f %f", data[i].identifier, data[i].state, data[i].px, data[i].py);
             }
         }
 
@@ -2507,8 +2515,16 @@ static void gestureMagicMouseTwoFixOneSlide(Finger *data, int nFingers, double t
                 }
             } else {
 
-                if (lenSqr(data[mini].px, data[mini].py, last[0], last[1]) < 0.000001 &&
-                   (fabs(data[mini].px - fing[mini][0]) >= 0.07 || fabs(data[mini].py - fing[mini][1]) >= 0.08)) {
+                if (
+                    (
+                     lenSqr(data[mini].px, data[mini].py, last[0], last[1]) < 0.000001 ||
+                     data[mini].state == MTTouchStateBreakTouch
+                    ) &&
+                    (
+                     fabs(data[mini].px - fing[mini][0]) >= 0.07 * charRegIndexRingDistance / 0.33 ||
+                     fabs(data[mini].py - fing[mini][1]) >= 0.08 * charRegIndexRingDistance / 0.33
+                    )
+                ) {
                     float dx = fabs(fing[mini][0] - data[mini].px), dy = fabs(fing[mini][1] - data[mini].py);
                     if (dx > dy) {
                         if (fing[mini][0] < data[mini].px)
