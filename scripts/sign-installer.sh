@@ -1,4 +1,7 @@
-#!/bin/sh
+#!/bin/bash
+
+set -Eeuo pipefail
+
 CURRENT_PROJECT_VERSION="$1"  # e.g. 2.75
 BUILT_PRODUCTS_DIR="build/Jitouch_${CURRENT_PROJECT_VERSION}"
 OBJROOT=build/staging
