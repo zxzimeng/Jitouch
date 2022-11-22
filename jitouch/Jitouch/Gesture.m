@@ -64,9 +64,7 @@ static const int magicTrackpadFamilyIDs[] = {
 // to suppress "'CGPostKeyboardEvent' is deprecated" warnings
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-#ifdef DEBUG
-#define DEBUG TRUE
-#else
+#ifndef DEBUG
 #define DEBUG FALSE
 #endif
 
