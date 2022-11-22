@@ -3136,9 +3136,13 @@ int eventTapTries = 0;
 - (void)createEventTapTimer:(NSTimer *)timer {
     CFMachPortRef newEventTap = nil;
     newEventTap = [me createEventTap];
-    if (newEventTap == nil && eventTapTries < 360) {
+    if (newEventTap == nil) {
         eventTapTries++;
-        [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
+        if (eventTapTries < 360) {
+            [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
+        } else {
+            NSLog(@"Could not create CGEventTap after 5 minutes. Perhaps try removing Jitouch permissions and relaunching Jitouch.");
+        }
     } else {
         NSLog(@"CGEventTap created");
         eventTap = newEventTap;
