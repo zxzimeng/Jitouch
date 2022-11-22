@@ -1197,9 +1197,11 @@ static int gestureTrackpadMoveResize(const Finger *data, int nFingers, double ti
         if (step2 == 0) {
             if (firstTime) {
                 getMousePosition(&baseX, &baseY);
-                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                [cursorWindow orderOut:nil];
-                [pool release];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    @autoreleasepool {
+                        [cursorWindow orderOut:nil];
+                    }
+                });
                 if (cWindow == nil)
                     cWindow = activateWindowAtPosition(baseX, baseY);
 
@@ -1209,12 +1211,15 @@ static int gestureTrackpadMoveResize(const Finger *data, int nFingers, double ti
                     getWindowPos(cWindow, &appX, &appY);
 
                     cursorImageType = type - 1;
-                    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                    [cursorWindow display];
-                    setCursorWindowAtMouse();
-                    [cursorWindow setLevel:NSScreenSaverWindowLevel];
-                    [cursorWindow makeKeyAndOrderFront:nil];
-                    [pool release];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        @autoreleasepool {
+                            [cursorWindow display];
+                            [[cursorWindow contentView] setNeedsDisplay:YES];
+                            setCursorWindowAtMouse();
+                            [cursorWindow setLevel:NSScreenSaverWindowLevel];
+                            [cursorWindow makeKeyAndOrderFront:nil];
+                        }
+                    });
 
                     moveResizeFlag = 1;
                 }
@@ -1228,15 +1233,21 @@ static int gestureTrackpadMoveResize(const Finger *data, int nFingers, double ti
             if (nFingers == 1 && !shouldExitMoveResize) {
                 CGFloat x, y;
                 getMousePosition(&x, &y);
-                setCursorWindowAtMouse();
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    @autoreleasepool {
+                        setCursorWindowAtMouse();
+                    }
+                });
                 if (type == 1) {
                     setWindowPos2(cWindow, x, y, baseX, baseY, appX, appY);
                 } else if (type == 2) {
                     if (!setWindowSize2(cWindow, x, y, baseX, baseY)) {
                         type = 0;
-                        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                        [cursorWindow orderOut:nil];
-                        [pool release];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            @autoreleasepool {
+                                [cursorWindow orderOut:nil];
+                            }
+                        });
                         CFSafeRelease(cWindow);
                         cWindow = nil;
 
@@ -1277,9 +1288,11 @@ static int gestureTrackpadMoveResize(const Finger *data, int nFingers, double ti
                 type = 0;
                 CFSafeRelease(cWindow);
                 cWindow = nil;
-                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                [cursorWindow orderOut:nil];
-                [pool release];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    @autoreleasepool {
+                        [cursorWindow orderOut:nil];
+                    }
+                });
 
                 moveResizeFlag = 0;
                 //CGEventTapEnable(eventClick, false);
@@ -1361,9 +1374,11 @@ static int gestureTrackpadMoveResize(const Finger *data, int nFingers, double ti
                         type = 0;
                         CFSafeRelease(cWindow);
                         cWindow = nil;
-                        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                        [cursorWindow orderOut:nil];
-                        [pool release];
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            @autoreleasepool {
+                                [cursorWindow orderOut:nil];
+                            }
+                        });
 
                         moveResizeFlag = 0;
                     } else if (data[!min].py < fing[1][1]) {
@@ -2372,9 +2387,11 @@ static int gestureMagicMouseV(const Finger *data, int nFingers) {
         if (nFingers == 0 || nFingers > 2) {
             CFSafeRelease(cWindow);
             cWindow = nil;
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-            [cursorWindow orderOut:nil];
-            [pool release];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                @autoreleasepool {
+                    [cursorWindow orderOut:nil];
+                }
+            });
             type = 0;
             firstTouch = 1;
             reset = 0;
@@ -2389,9 +2406,11 @@ static int gestureMagicMouseV(const Finger *data, int nFingers) {
 
     if (init) {
         getMousePosition(&baseX, &baseY);
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-        [cursorWindow orderOut:nil];
-        [pool release];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @autoreleasepool {
+                [cursorWindow orderOut:nil];
+            }
+        });
         if (cWindow == nil)
             cWindow = activateWindowAtPosition(baseX, baseY);
 
@@ -2401,12 +2420,15 @@ static int gestureMagicMouseV(const Finger *data, int nFingers) {
             getWindowPos(cWindow, &appX, &appY);
 
             cursorImageType = type - 1;
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-            [cursorWindow display];
-            setCursorWindowAtMouse();
-            [cursorWindow setLevel:NSScreenSaverWindowLevel];
-            [cursorWindow makeKeyAndOrderFront:nil];
-            [pool release];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                @autoreleasepool {
+                    [cursorWindow display];
+                    [[cursorWindow contentView] setNeedsDisplay:YES];
+                    setCursorWindowAtMouse();
+                    [cursorWindow setLevel:NSScreenSaverWindowLevel];
+                    [cursorWindow makeKeyAndOrderFront:nil];
+                }
+            });
         }
     }
     if (type) {
@@ -2420,9 +2442,11 @@ static int gestureMagicMouseV(const Finger *data, int nFingers) {
                 if (!setWindowSize2(cWindow, x, y, baseX, baseY)) {
                     CFSafeRelease(cWindow);
                     cWindow = nil;
-                    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                    [cursorWindow orderOut:nil];
-                    [pool release];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        @autoreleasepool {
+                            [cursorWindow orderOut:nil];
+                        }
+                    });
                     type = 0;
                     firstTouch = 1;
                     reset = 0;
