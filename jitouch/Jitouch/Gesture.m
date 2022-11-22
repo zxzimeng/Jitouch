@@ -1200,9 +1200,9 @@ static int gestureTrackpadMoveResize(const Finger *data, int nFingers, double ti
             if (firstTime) {
                 getMousePosition(&baseX, &baseY);
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                    [cursorWindow orderOut:nil];
-                    [pool release];
+                    @autoreleasepool {
+                        [cursorWindow orderOut:nil];
+                    }
                 });
                 if (cWindow == nil)
                     cWindow = activateWindowAtPosition(baseX, baseY);
