@@ -8,6 +8,8 @@ OBJROOT=build/staging
 PRODUCT_BUNDLE_IDENTIFIER="com.jitouch.Jitouch"
 signing_cert="Developer ID Installer: Aaron Kollasch (5UQY3B3594)"
 
+[[ "${CURRENT_PROJECT_VERSION::1}" != "v" && "${CURRENT_PROJECT_VERSION::1}" != "V" ]] || { echo "using version name without v"; CURRENT_PROJECT_VERSION="${CURRENT_PROJECT_VERSION:1}"; }
+
 zip "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane.zip" "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane"
 xcrun notarytool submit "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane.zip" --keychain-profile "aaron@kollasch.dev" --wait
 xcrun stapler staple "${BUILT_PRODUCTS_DIR}/Jitouch.prefPane"
