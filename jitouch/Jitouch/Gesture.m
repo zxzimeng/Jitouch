@@ -3063,8 +3063,14 @@ static CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEve
             NSLog(@"Received kCGEventTapDisabledByTimeout; attempting to recreate CGEventTap. Allow Jitouch in System Preferences -> Privacy -> Accessibility.");
             CFMachPortInvalidate(eventTap);
             CFRelease(eventTap);
-            eventTapTries = 0;
-            [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
+            eventTap = [me createEventTap];
+            if (eventTap == nil) {
+                NSLog(@"Could not create CGEventTap. Scheduling retries.");
+                eventTapTries = 0;
+                [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
+            } else {
+                recreatingEventTap = FALSE;
+            }
         });
         return NULL;
     }
@@ -3177,6 +3183,7 @@ int eventTapTries = 0;
     CFMachPortRef newEventTap = nil;
     newEventTap = [me createEventTap];
     if (newEventTap == nil) {
+        if (logLevel >= LOG_LEVEL_DEBUG) NSLog(@"Could not create CGEventTap (try %d)", eventTapTries);
         eventTapTries++;
         if (eventTapTries < 360) {
             [NSTimer scheduledTimerWithTimeInterval:1.0 target:me selector:@selector(createEventTapTimer:) userInfo:nil repeats:NO];
