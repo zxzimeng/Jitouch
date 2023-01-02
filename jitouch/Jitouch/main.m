@@ -26,6 +26,9 @@ int main(int argc, const char * argv[])
     dispatch_resume(source);
 
     // Ignore the SIGHUP signal because we handle it.
+    // To debug SIGHUP in Xcode, add an "ignoreSIGHUP" breakpoint at this line, before `signal()`.
+    // set the breakpoint action to `process handle SIGHUP -n true -p true -s false`
+    // set the breakpoint to automatically continue after evaluating actions.
     signal(SIGHUP, SIG_IGN);
 
     return NSApplicationMain(argc, argv);
