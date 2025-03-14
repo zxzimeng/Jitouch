@@ -923,10 +923,12 @@ static void doCommand(NSString *gesture, int device) {
                     if ([[NSFileManager defaultManager] fileExistsAtPath:openFilePath]) {
                         NSString *extension = [openFilePath pathExtension];
                         if ([extension isEqualToString:@"scpt"] || [extension isEqualToString:@"scptd"]) {
-                            NSString *script = [NSString stringWithFormat:@"osascript \"%@\"", [openFilePath stringByStandardizingPath]];
-                            NSArray *shArgs = [NSArray arrayWithObjects:@"-c", script, @"", nil];
-                            [NSTask launchedTaskWithLaunchPath:@"/bin/sh" arguments:shArgs];
-                        } else {
+                            NSString *scriptPath = [openFilePath stringByStandardizingPath];
+                            [NSTask launchedTaskWithLaunchPath:@"/usr/bin/osascript" arguments:@[scriptPath]];
+                        } else if ([extension isEqualToString:@"sh"]) {
+                            NSString *scriptPath = [openFilePath stringByStandardizingPath];
+                            [NSTask launchedTaskWithLaunchPath:@"/bin/zsh" arguments:@[scriptPath]];
+                        }else {
                                [[NSWorkspace sharedWorkspace] openFile:openFilePath];
                            }
                     } else {
