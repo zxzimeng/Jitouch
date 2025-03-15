@@ -1,4 +1,4 @@
-## A Note on Actively Maintaing Jitouch
+## A Note on Actively Maintaining Jitouch
 
 Jitouch has not recieved an update since 2023, I aim to atleast fix some of the most glaring issues and bring some development to this project.
 
