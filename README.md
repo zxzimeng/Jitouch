@@ -1,4 +1,15 @@
-# Jitouch
+## A Note on Actively Maintaing Jitouch
+
+Jitouch has not recieved an update since 2023, I aim to atleast fix some of the most glaring issues and bring some development to this project.
+
+### The todo for me currently looks like:
+- stop repeatedly asking for permissions popup
+- proper sonoma support for keyboard shortcuts (input pane broken)
+
+### Currently resolved:
+- add shell script execution
+
+# Original Readme
 
 **Jitouch** is a Mac application that expands the set of multi-touch gestures for MacBook, Magic Mouse, and Magic Trackpad. These thoughtfully designed gestures enable users to perform frequent tasks more easily such as changing tabs in web browsers, closing windows, minimizing windows, changing spaces, and a lot more.
 
@@ -31,5 +42,6 @@ After opening the Jitouch preference pane in System Preferences, a prompt should
 
 Copyright (c) Supasorn Suwajanakorn and Sukolsak Sakshuwong. All rights reserved.  
 Modified work copyright (c) Aaron Kollasch. All rights reserved.
+Modified work copyright (c) Zimeng Xiong. All rights reserved.
 
 Licensed under the [GNU General Public License v3.0](LICENSE).
